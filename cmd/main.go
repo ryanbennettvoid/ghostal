@@ -16,7 +16,7 @@ var start = time.Now()
 
 func exit(err error) {
 	if err == nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Done in %.3fs.", time.Now().Sub(start).Seconds())
+		_, _ = fmt.Fprintf(os.Stdout, "Done in %.3fs.\n", time.Now().Sub(start).Seconds())
 		os.Exit(0)
 	} else {
 		_, _ = fmt.Fprintf(os.Stderr, "ERR: %s\n", err)
@@ -98,12 +98,13 @@ func run(args app.ProgramArgs) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("Snapshots")
+		fmt.Println("Snapshots:")
 		for _, item := range listItems {
-			fmt.Printf("%s (%s)\n", item.Name, item.CreatedAt)
+			fmt.Printf("  %s (%s)\n", item.Name, item.CreatedAt)
 		}
 	}
 
-	return nil
+	exit(nil)
 
+	return nil
 }

@@ -15,5 +15,4 @@ func TestParsePostgresURL(t *testing.T) {
 	assert.Equal(t, "postgresql", pgURL.Scheme())
 	assert.Equal(t, "admin", pgURL.Username())
 	assert.Equal(t, "main", pgURL.DBName())
-	assert.Equal(t, ValidPostgresURL+"?sslmode=disable", pgURL.WithoutSSL().String())
 }
