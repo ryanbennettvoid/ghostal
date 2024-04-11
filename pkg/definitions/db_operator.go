@@ -9,6 +9,7 @@ import (
 
 type ListResult struct {
 	Name      string    `json:"name"`
+	DBName    string    `json:"db_name"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
