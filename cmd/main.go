@@ -29,9 +29,7 @@ func main() {
 	if err != nil {
 		exit(fmt.Errorf("failed to parse program args: %w", err))
 	}
-	if err := run(args); err != nil {
-		exit(err)
-	}
+	exit(run(args))
 }
 
 func run(args app.ProgramArgs) error {

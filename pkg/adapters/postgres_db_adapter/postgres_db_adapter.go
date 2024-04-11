@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-var NoSpecialCharsErr = errors.New("no special characters allowed in snapshot name")
+var NoSpecialCharsErr = errors.New("snapshot name can only contain alphanumeric characters or underscores")
 var SnapshotNameTakenErr = errors.New("snapshot name already used")
 var SnapshotNotExistsErr = errors.New("snapshot does not exist")
 
@@ -48,7 +48,7 @@ func (p *PostgresDBAdapter) GetScheme() string {
 }
 
 func (p *PostgresDBAdapter) checkSnapshotName(snapshotName string) error {
-	if !utils.IsAlphanumeric(snapshotName) {
+	if !utils.IsValidSnapshotName(snapshotName) {
 		return NoSpecialCharsErr
 	}
 	list, err := p.List()
@@ -144,13 +144,13 @@ func (p *PostgresDBAdapter) List() (definitions.List, error) {
 			continue
 		}
 
-		nameAndTimestamp := strings.Split(dbName, values.SnapshotDBPrefix)[1]
-		parts := strings.Split(nameAndTimestamp, "_")
-		name := parts[0]
-		timestamp, err := strconv.Atoi(parts[1])
+		withoutPrefix := strings.TrimPrefix(dbName, values.SnapshotDBPrefix)
+		partsWithoutPrefix := strings.Split(withoutPrefix, "_")
+		timestamp, err := strconv.Atoi(partsWithoutPrefix[len(partsWithoutPrefix)-1])
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse database timestamp: %w", err)
 		}
+		name := strings.Join(partsWithoutPrefix[:len(partsWithoutPrefix)-1], "_") // without suffix
 
 		list = append(list, definitions.ListResult{
 			Name:      name,
