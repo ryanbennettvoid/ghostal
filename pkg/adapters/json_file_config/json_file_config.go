@@ -3,14 +3,12 @@ package json_file_config
 import (
 	"encoding/json"
 	"errors"
+	"ghostel/pkg/values"
 	"io"
 	"io/ioutil"
 	"os"
 	"sync"
 )
-
-// ConfigFile is the file where the configuration is stored
-const ConfigFile = "config.json"
 
 // FileConfig implements IConfig interface using a JSON file
 type FileConfig struct {
@@ -56,7 +54,7 @@ func (fc *FileConfig) Set(key, value string) error {
 
 // load reads the configuration from the JSON file
 func (fc *FileConfig) load() error {
-	file, err := os.Open(ConfigFile)
+	file, err := os.Open(values.ConfigFilename)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil // It's okay if the file doesn't exist
@@ -81,5 +79,5 @@ func (fc *FileConfig) save() error {
 		return err
 	}
 
-	return ioutil.WriteFile(ConfigFile, file, 0644)
+	return ioutil.WriteFile(values.ConfigFilename, file, 0644)
 }
