@@ -8,7 +8,6 @@ import (
 	"ghostel/pkg/app"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
-	_ "github.com/olekukonko/tablewriter"
 	"os"
 	"time"
 )
@@ -92,6 +91,7 @@ func run(args app.ProgramArgs) error {
 		if err := snapshotFn(snapshotName); err != nil {
 			return err
 		}
+		return nil
 	}
 
 	if args.Command == app.ListCommand {
@@ -100,9 +100,8 @@ func run(args app.ProgramArgs) error {
 			return err
 		}
 		listItems.Print()
+		return nil
 	}
 
-	exit(nil)
-
-	return nil
+	return fmt.Errorf("unknown command \"%s\"", args.Command)
 }
