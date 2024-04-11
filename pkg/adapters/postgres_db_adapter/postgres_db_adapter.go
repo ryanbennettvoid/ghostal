@@ -7,6 +7,7 @@ import (
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
 	"ghostel/pkg/values"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"log"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 
 var NoSpecialCharsErr = errors.New("no special characters allowed in snapshot name")
 var SnapshotNameTakenErr = errors.New("snapshot name already used")
+var SnapshotNotExistsErr = errors.New("snapshot does not exist")
 
 type PostgresDBAdapter struct {
 	pgURL *PostgresURL
@@ -41,6 +43,10 @@ func (p *PostgresDBAdapter) connect() (*sql.DB, func(), error) {
 	}, nil
 }
 
+func (p *PostgresDBAdapter) GetScheme() string {
+	return p.pgURL.Scheme()
+}
+
 func (p *PostgresDBAdapter) checkSnapshotName(snapshotName string) error {
 	if !utils.IsAlphanumeric(snapshotName) {
 		return NoSpecialCharsErr
@@ -55,10 +61,6 @@ func (p *PostgresDBAdapter) checkSnapshotName(snapshotName string) error {
 		}
 	}
 	return nil
-}
-
-func (p *PostgresDBAdapter) GetScheme() string {
-	return p.pgURL.Scheme()
 }
 
 func (p *PostgresDBAdapter) Snapshot(snapshotName string) error {
@@ -86,12 +88,35 @@ func (p *PostgresDBAdapter) Restore(snapshotName string) error {
 	panic("implement me")
 }
 
-func (p *PostgresDBAdapter) Remove(snapshotName string) error {
-	if err := p.checkSnapshotName(snapshotName); err != nil {
+func (p *PostgresDBAdapter) removeDb(dbName string) error {
+	db, close, err := p.connect()
+	if err != nil {
 		return err
 	}
-	//TODO implement me
-	panic("implement me")
+	defer close()
+
+	query := fmt.Sprintf("DROP DATABASE IF EXISTS %s", pq.QuoteIdentifier(dbName))
+	_, err = db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *PostgresDBAdapter) Remove(snapshotName string) error {
+	list, err := p.List()
+	if err != nil {
+		return err
+	}
+	for _, item := range list {
+		if item.Name == snapshotName {
+			if err := p.removeDb(item.DBName); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return SnapshotNotExistsErr
 }
 
 func (p *PostgresDBAdapter) List() (definitions.List, error) {
@@ -129,6 +154,7 @@ func (p *PostgresDBAdapter) List() (definitions.List, error) {
 
 		list = append(list, definitions.ListResult{
 			Name:      name,
+			DBName:    dbName,
 			CreatedAt: time.Unix(int64(timestamp/1000), 0),
 		})
 	}
