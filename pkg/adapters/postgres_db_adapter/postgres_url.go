@@ -14,14 +14,6 @@ func (p *PostgresURL) cloneURL() *url.URL {
 	return &clone
 }
 
-func (p *PostgresURL) WithoutSSL() *url.URL {
-	clone := p.cloneURL()
-	params := clone.Query()
-	params.Set("sslmode", "disable")
-	clone.RawQuery = params.Encode()
-	return clone
-}
-
 func (p *PostgresURL) Scheme() string {
 	return p.dbURL.Scheme
 }
