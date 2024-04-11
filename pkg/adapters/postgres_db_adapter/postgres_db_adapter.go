@@ -15,6 +15,7 @@ import (
 )
 
 var NoSpecialCharsErr = errors.New("no special characters allowed in snapshot name")
+var SnapshotNameTakenErr = errors.New("snapshot name already used")
 
 type PostgresDBAdapter struct {
 	pgURL *PostgresURL
@@ -40,13 +41,29 @@ func (p *PostgresDBAdapter) connect() (*sql.DB, func(), error) {
 	}, nil
 }
 
+func (p *PostgresDBAdapter) checkSnapshotName(snapshotName string) error {
+	if !utils.IsAlphanumeric(snapshotName) {
+		return NoSpecialCharsErr
+	}
+	list, err := p.List()
+	if err != nil {
+		return err
+	}
+	for _, item := range list {
+		if item.Name == snapshotName {
+			return SnapshotNameTakenErr
+		}
+	}
+	return nil
+}
+
 func (p *PostgresDBAdapter) GetScheme() string {
 	return p.pgURL.Scheme()
 }
 
 func (p *PostgresDBAdapter) Snapshot(snapshotName string) error {
-	if !utils.IsAlphanumeric(snapshotName) {
-		return NoSpecialCharsErr
+	if err := p.checkSnapshotName(snapshotName); err != nil {
+		return err
 	}
 	db, close, err := p.connect()
 	if err != nil {
@@ -62,22 +79,22 @@ func (p *PostgresDBAdapter) Snapshot(snapshotName string) error {
 }
 
 func (p *PostgresDBAdapter) Restore(snapshotName string) error {
-	if !utils.IsAlphanumeric(snapshotName) {
-		return NoSpecialCharsErr
+	if err := p.checkSnapshotName(snapshotName); err != nil {
+		return err
 	}
 	//TODO implement me
 	panic("implement me")
 }
 
 func (p *PostgresDBAdapter) Remove(snapshotName string) error {
-	if !utils.IsAlphanumeric(snapshotName) {
-		return NoSpecialCharsErr
+	if err := p.checkSnapshotName(snapshotName); err != nil {
+		return err
 	}
 	//TODO implement me
 	panic("implement me")
 }
 
-func (p *PostgresDBAdapter) List() ([]definitions.ListResult, error) {
+func (p *PostgresDBAdapter) List() (definitions.List, error) {
 	db, close, err := p.connect()
 	if err != nil {
 		return nil, err

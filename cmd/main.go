@@ -8,6 +8,7 @@ import (
 	"ghostel/pkg/app"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
+	_ "github.com/olekukonko/tablewriter"
 	"os"
 	"time"
 )
@@ -98,10 +99,7 @@ func run(args app.ProgramArgs) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("Snapshots:")
-		for _, item := range listItems {
-			fmt.Printf("  %s (%s)\n", item.Name, item.CreatedAt)
-		}
+		listItems.Print()
 	}
 
 	exit(nil)
