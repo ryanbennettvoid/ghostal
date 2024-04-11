@@ -24,4 +24,4 @@ go.work
 .idea
 
 # Config
-config.json
+.ghostel
