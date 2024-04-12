@@ -1,4 +1,4 @@
-package postgres_db_adapter
+package postgres_db_operator
 
 import (
 	"github.com/stretchr/testify/assert"
