@@ -11,13 +11,31 @@ import (
 )
 
 func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
+	// NOTE: MongoDB doesn't support renaming databases (?)
+	//		 so cloning is used instead
+
+	// backup original
+	backupDBName := "temp_emergency_backup_" + originalDBName
+	if err := cloneDB(db, originalDBName, backupDBName); err != nil {
+		return err
+	}
+	// drop original
 	if err := dropDB(db, originalDBName); err != nil {
 		return err
 	}
+	// copy snapshot to original
 	if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
 		return err
 	}
-	return dropDB(db, snapshotDBName)
+	// drop snapshot
+	if err := dropDB(db, snapshotDBName); err != nil {
+		return err
+	}
+	// drop backup
+	if err := dropDB(db, backupDBName); err != nil {
+		return err
+	}
+	return nil
 }
 
 func snapshotDB(db *mongo.Client, originalDBName, snapshotName string) error {
