@@ -130,7 +130,7 @@ func (cm *JSONFileConfig) SetProject(name *string, project definitions.Project) 
 	return errors.New("project not found")
 }
 
-func (cm *JSONFileConfig) GetAllProjects() ([]definitions.Project, error) {
+func (cm *JSONFileConfig) GetAllProjects() (definitions.ProjectsList, error) {
 	if err := cm.load(); err != nil {
 		return nil, err
 	}
