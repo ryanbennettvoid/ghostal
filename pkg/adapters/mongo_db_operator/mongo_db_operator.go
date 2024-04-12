@@ -30,7 +30,6 @@ func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), erro
 		newMongoURL.Path = "admin"
 		dbURL = newMongoURL.String()
 	}
-	fmt.Printf("DBURL: %s\n", dbURL)
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURL))
 	if err != nil {
 		return nil, nil, err
