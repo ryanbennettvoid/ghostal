@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"ghostel/pkg/adapters/json_file_config"
-	"ghostel/pkg/adapters/postgres_db_adapter"
+	"ghostel/pkg/adapters/postgres_db_operator"
 	"ghostel/pkg/app"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
@@ -63,7 +63,7 @@ func run(args app.ProgramArgs) error {
 	}
 	switch scheme {
 	case "postgresql":
-		dbOperator, err = postgres_db_adapter.CreatePostgresDBAdapter(dbURL)
+		dbOperator, err = postgres_db_operator.CreatePostgresDBOperator(dbURL)
 		if err != nil {
 			return fmt.Errorf("failed to initialize postgres adapter: %w", err)
 		}
