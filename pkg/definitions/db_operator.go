@@ -2,8 +2,6 @@ package definitions
 
 import (
 	"ghostel/pkg/utils"
-	"github.com/olekukonko/tablewriter"
-	"os"
 	"time"
 )
 
@@ -15,15 +13,16 @@ type ListResult struct {
 
 type List []ListResult
 
-func (list List) Print() {
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Created", "Timestamp"})
-	for _, item := range list {
+func (list List) Print(logger ITableLogger) {
+	columns := []string{"Name", "Created", "Timestamp"}
+	rows := make([][]string, len(list))
+	for idx := range list {
+		item := list[idx]
 		relativeTime := utils.ToRelativeTime(item.CreatedAt)
 		formattedTime := item.CreatedAt.Format("2006-01-02 15:04:05")
-		table.Append([]string{item.Name, relativeTime, formattedTime})
+		rows[idx] = []string{item.Name, relativeTime, formattedTime}
 	}
-	table.Render()
+	logger.Log(columns, rows)
 }
 
 type IDBOperator interface {
