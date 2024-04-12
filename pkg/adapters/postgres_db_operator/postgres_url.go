@@ -1,4 +1,4 @@
-package postgres_db_adapter
+package postgres_db_operator
 
 import (
 	"net/url"
@@ -8,7 +8,7 @@ type PostgresURL struct {
 	dbURL *url.URL
 }
 
-func (p *PostgresURL) cloneURL() *url.URL {
+func (p *PostgresURL) Clone() *url.URL {
 	clone := *p.dbURL
 	clone.User = &(*p.dbURL.User)
 	return &clone
