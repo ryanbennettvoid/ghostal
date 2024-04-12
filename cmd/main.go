@@ -77,7 +77,8 @@ func run(args app.ProgramArgs) error {
 		if err := cfg.SelectProject(newSelectedProject); err != nil {
 			return err
 		}
-		fmt.Printf("Selected project \"%s\".\n", newSelectedProject)
+		tableLogger := pretty_table_logger.NewPrettyTableLogger()
+		tableLogger.Log([]string{"Selected Project"}, [][]string{{newSelectedProject}})
 		return nil
 	}
 
