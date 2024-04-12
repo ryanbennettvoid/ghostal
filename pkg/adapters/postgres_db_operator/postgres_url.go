@@ -14,10 +14,6 @@ func (p *PostgresURL) Clone() *url.URL {
 	return &clone
 }
 
-func (p *PostgresURL) Scheme() string {
-	return p.dbURL.Scheme
-}
-
 func (p *PostgresURL) Username() string {
 	return p.dbURL.User.Username()
 }

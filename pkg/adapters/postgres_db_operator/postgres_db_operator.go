@@ -2,16 +2,12 @@ package postgres_db_operator
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
+	"ghostel/pkg/values"
 	_ "github.com/lib/pq"
 )
-
-var NoSpecialCharsErr = errors.New("snapshot name can only contain alphanumeric characters or underscores")
-var SnapshotNameTakenErr = errors.New("snapshot name already used")
-var SnapshotNotExistsErr = errors.New("snapshot does not exist")
 
 type PostgresDBOperator struct {
 	pgURL *PostgresURL
@@ -45,7 +41,7 @@ func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 
 func (p *PostgresDBOperator) checkSnapshotName(snapshotName string) error {
 	if !utils.IsValidSnapshotName(snapshotName) {
-		return NoSpecialCharsErr
+		return values.NoSpecialCharsErr
 	}
 	list, err := p.List()
 	if err != nil {
@@ -53,14 +49,10 @@ func (p *PostgresDBOperator) checkSnapshotName(snapshotName string) error {
 	}
 	for _, item := range list {
 		if item.Name == snapshotName {
-			return SnapshotNameTakenErr
+			return values.SnapshotNameTakenErr
 		}
 	}
 	return nil
-}
-
-func (p *PostgresDBOperator) GetScheme() string {
-	return p.pgURL.Scheme()
 }
 
 func (p *PostgresDBOperator) Snapshot(snapshotName string) error {
@@ -98,11 +90,11 @@ func (p *PostgresDBOperator) Restore(snapshotName string) error {
 			return nil
 		}
 	}
-	return SnapshotNotExistsErr
+	return values.SnapshotNotExistsErr
 }
 
 func (p *PostgresDBOperator) Remove(snapshotName string) error {
-	db, close, err := p.connect(false)
+	db, close, err := p.connect(true)
 	if err != nil {
 		return err
 	}
@@ -120,11 +112,11 @@ func (p *PostgresDBOperator) Remove(snapshotName string) error {
 			return nil
 		}
 	}
-	return SnapshotNotExistsErr
+	return values.SnapshotNotExistsErr
 }
 
 func (p *PostgresDBOperator) List() (definitions.List, error) {
-	db, close, err := p.connect(false)
+	db, close, err := p.connect(true)
 	if err != nil {
 		return nil, err
 	}

@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"ghostel/pkg/definitions"
+	"ghostel/pkg/utils"
 	"ghostel/pkg/values"
 	"github.com/lib/pq"
-	"strconv"
 	"strings"
-	"time"
 )
 
 func terminateConnections(db *sql.DB, targetDB string) error {
@@ -22,6 +21,9 @@ func terminateConnections(db *sql.DB, targetDB string) error {
 }
 
 func renameDB(db *sql.DB, currentName, newName string) error {
+	if err := terminateConnections(db, currentName); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
 	query := fmt.Sprintf("ALTER DATABASE %s RENAME TO %s", pq.QuoteIdentifier(currentName), pq.QuoteIdentifier(newName))
 	_, err := db.Exec(query)
 	if err != nil {
@@ -31,6 +33,9 @@ func renameDB(db *sql.DB, currentName, newName string) error {
 	return nil
 }
 func dropDB(db *sql.DB, targetDB string) error {
+	if err := terminateConnections(db, targetDB); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
 	query := fmt.Sprintf("DROP DATABASE IF EXISTS %s", pq.QuoteIdentifier(targetDB))
 	_, err := db.Exec(query)
 	if err != nil {
@@ -58,18 +63,15 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 			continue
 		}
 
-		withoutPrefix := strings.TrimPrefix(dbName, values.SnapshotDBPrefix)
-		partsWithoutPrefix := strings.Split(withoutPrefix, "_")
-		timestamp, err := strconv.Atoi(partsWithoutPrefix[len(partsWithoutPrefix)-1])
+		snapshotDBNameParts, err := utils.ParseSnapshotDBName(dbName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse database timestamp: %w", err)
+			return nil, err
 		}
-		name := strings.Join(partsWithoutPrefix[:len(partsWithoutPrefix)-1], "_") // without suffix
 
 		list = append(list, definitions.ListResult{
-			Name:      name,
+			Name:      snapshotDBNameParts.Name,
 			DBName:    dbName,
-			CreatedAt: time.Unix(int64(timestamp/1000), 0),
+			CreatedAt: snapshotDBNameParts.Timestamp,
 		})
 	}
 
@@ -84,17 +86,11 @@ func restoreDB(db *sql.DB, originalDBName, snapshotDBName string) error {
 
 	// backup original via rename
 	backupSnapshotName := "temp_emergency_backup_" + originalDBName
-	if err := terminateConnections(db, originalDBName); err != nil {
-		return fmt.Errorf("failed to terminate connection: %w", err)
-	}
 	if err := renameDB(db, originalDBName, backupSnapshotName); err != nil {
 		return fmt.Errorf("failed to rename snapshot: %w", err)
 	}
 
 	// restore snapshot to original via rename
-	if err := terminateConnections(db, snapshotDBName); err != nil {
-		return fmt.Errorf("failed to terminate connection: %w", err)
-	}
 	if err := renameDB(db, snapshotDBName, originalDBName); err != nil {
 		return fmt.Errorf("failed to rename snapshot: %w", err)
 	}
@@ -112,7 +108,7 @@ func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
-	fullSnapshotName := fmt.Sprintf("%s%s_%d", values.SnapshotDBPrefix, snapshotName, time.Now().UnixMilli())
+	fullSnapshotName := utils.BuildFullSnapshotName(snapshotName)
 	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", fullSnapshotName, originalDBName, originalDBOwner)
 	_, err := db.Exec(query)
 	if err != nil {
