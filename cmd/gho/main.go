@@ -92,21 +92,10 @@ func run(args app.ProgramArgs) error {
 		if err != nil {
 			return err
 		}
-		logger := pretty_table_logger.NewPrettyTableLogger()
-		columns := []string{"Projects", "Database URL", "Created", ""}
-		rows := make([][]string, 0)
-		for _, p := range allProjects {
-			name := p.Name
-			if p.Name == selectedProject.Name {
-				name = "* " + name
-			} else {
-				name = "  " + name
-			}
-			relativeTime := utils.ToRelativeTime(p.CreatedAt)
-			formattedTime := p.CreatedAt.Format("2006-01-02 15:04:05")
-			rows = append(rows, []string{name, p.DBURL, relativeTime, formattedTime})
-		}
-		logger.Log(columns, rows)
+		allProjects.Print(
+			pretty_table_logger.NewPrettyTableLogger(),
+			selectedProject.Name,
+		)
 		return nil
 	}
 
