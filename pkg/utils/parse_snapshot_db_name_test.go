@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestParseSnapshotDBName(t *testing.T) {
+func TestUnit_ParseSnapshotDBName(t *testing.T) {
 	input := "ghostel_snapshot_mydb_1712976085060"
 	output, err := ParseSnapshotDBName(input)
 	assert.NoError(t, err)
