@@ -8,6 +8,7 @@ import (
 	"ghostel/pkg/values"
 	"github.com/lib/pq"
 	"strings"
+	"time"
 )
 
 func terminateConnections(db *sql.DB, targetDB string) error {
@@ -108,7 +109,7 @@ func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
-	fullSnapshotName := utils.BuildFullSnapshotName(snapshotName)
+	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName, time.Now())
 	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", fullSnapshotName, originalDBName, originalDBOwner)
 	_, err := db.Exec(query)
 	if err != nil {
