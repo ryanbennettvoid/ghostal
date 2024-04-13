@@ -18,7 +18,7 @@ func (list List) Print(logger ITableLogger) {
 	rows := make([][]string, len(list))
 	for idx := range list {
 		item := list[idx]
-		relativeTime := utils.ToRelativeTime(item.CreatedAt)
+		relativeTime := utils.ToRelativeTime(item.CreatedAt, time.Now())
 		formattedTime := item.CreatedAt.Format("2006-01-02 15:04:05")
 		rows[idx] = []string{item.Name, relativeTime, formattedTime}
 	}
