@@ -23,7 +23,7 @@ func (p ProjectsList) Print(logger ITableLogger, selectedProjectName string) {
 		} else {
 			name = "  " + name
 		}
-		relativeTime := utils.ToRelativeTime(p.CreatedAt)
+		relativeTime := utils.ToRelativeTime(p.CreatedAt, time.Now())
 		formattedTime := p.CreatedAt.Format("2006-01-02 15:04:05")
 		rows = append(rows, []string{name, p.DBURL, relativeTime, formattedTime})
 	}
