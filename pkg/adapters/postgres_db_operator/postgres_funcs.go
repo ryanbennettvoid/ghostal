@@ -17,7 +17,6 @@ func terminateConnections(db *sql.DB, targetDB string) error {
 	if err != nil {
 		return fmt.Errorf("error terminating connections to database: %w", err)
 	}
-	//fmt.Printf("terminated connections to %s\n", targetDB)
 	return nil
 }
 
@@ -30,7 +29,6 @@ func renameDB(db *sql.DB, currentName, newName string) error {
 	if err != nil {
 		return fmt.Errorf("error renaming database from %s to %s: %w", currentName, newName, err)
 	}
-	//fmt.Printf("renamed %s to %s\n", currentName, newName)
 	return nil
 }
 func dropDB(db *sql.DB, targetDB string) error {
