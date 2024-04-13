@@ -13,19 +13,18 @@ import (
 	"testing"
 )
 
-const DBUser = "gho_user"
 const DBPassword = "gho_pass"
 const DBName = "gho_db"
 const DBPort = "27017"
 
-func createMongoContainer() (string, func()) {
+func createMongoContainer(dbUser string) (string, func()) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "mongo:7.0.5",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
 			"MONGO_INITDB_DATABASE":      DBName,
-			"MONGO_INITDB_ROOT_USERNAME": DBUser,
+			"MONGO_INITDB_ROOT_USERNAME": dbUser,
 			"MONGO_INITDB_ROOT_PASSWORD": DBPassword,
 		},
 		WaitingFor: wait.ForListeningPort(DBPort + "/tcp"),
@@ -48,7 +47,7 @@ func createMongoContainer() (string, func()) {
 		panic(err)
 	}
 
-	dbURL := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?tls=false", DBUser, DBPassword, host, mappedPort.Port(), DBName)
+	dbURL := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s?tls=false", dbUser, DBPassword, host, mappedPort.Port(), DBName)
 	return dbURL, func() {
 		_ = container.Terminate(ctx)
 	}
@@ -117,7 +116,14 @@ func getNumVehicles(dbURL string) int {
 }
 
 func TestIntegration_MongoDBOperator_Lifecycle(t *testing.T) {
-	dbURL, cleanup := createMongoContainer()
+	dbUsers := []string{"admin", "gho_user"}
+	for _, dbUser := range dbUsers {
+		runTest(t, dbUser)
+	}
+}
+
+func runTest(t *testing.T, dbUser string) {
+	dbURL, cleanup := createMongoContainer(dbUser)
 	defer cleanup()
 
 	operator, err := CreateMongoDBOperator(dbURL)

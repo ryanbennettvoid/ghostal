@@ -10,19 +10,18 @@ import (
 	"testing"
 )
 
-const DBUser = "gho_user"
 const DBPassword = "gho_pass"
 const DBName = "gho_db"
 const DBPort = "5432"
 
-func createPostgresContainer() (string, func()) {
+func createPostgresContainer(dbUser string) (string, func()) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:15.1-alpine",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
 			"POSTGRES_DB":       DBName,
-			"POSTGRES_USER":     DBUser,
+			"POSTGRES_USER":     dbUser,
 			"POSTGRES_PASSWORD": DBPassword,
 		},
 		WaitingFor: wait.ForListeningPort(DBPort + "/tcp"),
@@ -45,7 +44,7 @@ func createPostgresContainer() (string, func()) {
 		panic(err)
 	}
 
-	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", DBUser, DBPassword, host, mappedPort.Port(), DBName)
+	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", dbUser, DBPassword, host, mappedPort.Port(), DBName)
 	return dbURL, func() {
 		_ = container.Terminate(ctx)
 	}
@@ -136,7 +135,14 @@ func getNumVehicles(dbURL string) int {
 }
 
 func TestIntegration_PostgresDBOperator_Lifecycle(t *testing.T) {
-	dbURL, cleanup := createPostgresContainer()
+	dbUsers := []string{"postgres", "gho_user"}
+	for _, dbUser := range dbUsers {
+		runTest(t, dbUser)
+	}
+}
+
+func runTest(t *testing.T, dbUser string) {
+	dbURL, cleanup := createPostgresContainer(dbUser)
 	defer cleanup()
 
 	operator, err := CreatePostgresDBOperator(dbURL)
