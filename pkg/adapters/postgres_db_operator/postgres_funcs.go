@@ -111,7 +111,7 @@ func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string
 	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", fullSnapshotName, originalDBName, originalDBOwner)
 	_, err := db.Exec(query)
 	if err != nil {
-		return fmt.Errorf("failed to create snapshot: %w", err)
+		return fmt.Errorf("failed to create snapshot (%s): %w", query, err)
 	}
 	return nil
 }

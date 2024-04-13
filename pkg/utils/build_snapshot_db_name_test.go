@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestBuildSnapshotDBName_ValidInput(t *testing.T) {
+func TestUnit_BuildSnapshotDBName_ValidInput(t *testing.T) {
 	inputName := "niceapp"
 	inputTimestamp := time.Now()
 	output := BuildSnapshotDBName(inputName, inputTimestamp)

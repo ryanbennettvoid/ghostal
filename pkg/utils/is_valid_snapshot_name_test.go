@@ -5,19 +5,19 @@ import (
 	"testing"
 )
 
-func TestIsValidSnapshotName_ValidAlphanumeric(t *testing.T) {
+func TestUnit_IsValidSnapshotName_ValidAlphanumeric(t *testing.T) {
 	input := "ttt123"
 	output := IsValidSnapshotName(input)
 	assert.True(t, output)
 }
 
-func TestIsValidSnapshotName_ValidUnderscore(t *testing.T) {
+func TestUnit_IsValidSnapshotName_ValidUnderscore(t *testing.T) {
 	input := "t_tt"
 	output := IsValidSnapshotName(input)
 	assert.True(t, output)
 }
 
-func TestIsValidSnapshotName_Invalid(t *testing.T) {
+func TestUnit_IsValidSnapshotName_Invalid(t *testing.T) {
 	input := "t-tt"
 	output := IsValidSnapshotName(input)
 	assert.False(t, output)
