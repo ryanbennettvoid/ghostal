@@ -127,7 +127,7 @@ func run(args app.ProgramArgs) error {
 		snapshotFn = dbOperator.Restore
 		snapshotMsg = "Snapshot \"%s\" restored."
 	case app.RemoveCommand:
-		snapshotFn = dbOperator.Remove
+		snapshotFn = dbOperator.Delete
 		snapshotMsg = "Snapshot \"%s\" removed."
 	}
 

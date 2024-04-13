@@ -32,7 +32,13 @@ func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 	}
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("failed to open connection (%s): %w", dbURL, err)
+	}
+	// Attempt to ping the database to ensure connection is alive
+	err = db.Ping()
+	if err != nil {
+		_ = db.Close() // Ensure the connection is closed if not usable
+		return nil, nil, fmt.Errorf("failed to connect to database (%s): %w", dbURL, err)
 	}
 	return db, func() {
 		_ = db.Close()
@@ -57,7 +63,7 @@ func (p *PostgresDBOperator) checkSnapshotName(snapshotName string) error {
 
 func (p *PostgresDBOperator) Snapshot(snapshotName string) error {
 	if err := p.checkSnapshotName(snapshotName); err != nil {
-		return err
+		return fmt.Errorf("failed to check snapshot name: %w", err)
 	}
 	db, close, err := p.connect(true)
 	if err != nil {
@@ -93,7 +99,7 @@ func (p *PostgresDBOperator) Restore(snapshotName string) error {
 	return values.SnapshotNotExistsErr
 }
 
-func (p *PostgresDBOperator) Remove(snapshotName string) error {
+func (p *PostgresDBOperator) Delete(snapshotName string) error {
 	db, close, err := p.connect(true)
 	if err != nil {
 		return err
