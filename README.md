@@ -54,7 +54,7 @@ If you want to add support for other databases, just implement the `IDBOperator`
 type IDBOperator interface {
 	Snapshot(snapshotName string) error
 	Restore(snapshotName string) error
-	Remove(snapshotName string) error
+	Delete(snapshotName string) error
 	List() (List, error)
 }
 ```

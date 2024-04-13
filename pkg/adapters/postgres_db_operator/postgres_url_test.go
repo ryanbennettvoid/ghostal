@@ -7,7 +7,7 @@ import (
 
 const ValidPostgresURL = "postgresql://admin:pw@localhost/main"
 
-func TestParsePostgresURL(t *testing.T) {
+func TestUnit_ParsePostgresURL(t *testing.T) {
 	pgURL, err := ParsePostgresURL(ValidPostgresURL)
 	assert.NoError(t, err)
 	assert.NotNil(t, pgURL)

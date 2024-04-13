@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestToRelativeTime(t *testing.T) {
+func TestUnit_ToRelativeTime(t *testing.T) {
 
 	now := time.Now()
 

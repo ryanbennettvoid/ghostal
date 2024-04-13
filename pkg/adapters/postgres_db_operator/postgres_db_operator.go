@@ -63,7 +63,7 @@ func (p *PostgresDBOperator) checkSnapshotName(snapshotName string) error {
 
 func (p *PostgresDBOperator) Snapshot(snapshotName string) error {
 	if err := p.checkSnapshotName(snapshotName); err != nil {
-		return err
+		return fmt.Errorf("failed to check snapshot name: %w", err)
 	}
 	db, close, err := p.connect(true)
 	if err != nil {
@@ -99,7 +99,7 @@ func (p *PostgresDBOperator) Restore(snapshotName string) error {
 	return values.SnapshotNotExistsErr
 }
 
-func (p *PostgresDBOperator) Remove(snapshotName string) error {
+func (p *PostgresDBOperator) Delete(snapshotName string) error {
 	db, close, err := p.connect(true)
 	if err != nil {
 		return err
