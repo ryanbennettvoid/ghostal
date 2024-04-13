@@ -15,8 +15,7 @@ import (
 
 const DBUser = "gho_user"
 const DBPassword = "gho_pass"
-const DBName = "admin"
-const CustomDB = "gho_db"
+const DBName = "gho_db"
 const DBPort = "27017"
 
 func createMongoContainer() (string, func()) {
@@ -25,7 +24,7 @@ func createMongoContainer() (string, func()) {
 		Image:        "mongo:7.0.5",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
-			"MONGO_INITDB_DATABASE":      CustomDB,
+			"MONGO_INITDB_DATABASE":      DBName,
 			"MONGO_INITDB_ROOT_USERNAME": DBUser,
 			"MONGO_INITDB_ROOT_PASSWORD": DBPassword,
 		},
@@ -63,6 +62,14 @@ type MockCar struct {
 }
 
 func getCollection(dbURL string) (*mongo.Collection, func()) {
+	parsedURL, err := ParseMongoURL(dbURL)
+	if err != nil {
+		panic(err)
+	}
+	clonedURL := parsedURL.Clone()
+	clonedURL.Path = "admin"
+	dbURL = clonedURL.String()
+
 	clientOptions := options.Client().ApplyURI(dbURL)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -74,11 +81,7 @@ func getCollection(dbURL string) (*mongo.Collection, func()) {
 		panic(err)
 	}
 
-	err = client.Database(CustomDB).CreateCollection(context.Background(), "vehicles")
-	if err != nil {
-		panic(err)
-	}
-	collection := client.Database(CustomDB).Collection("vehicles")
+	collection := client.Database(DBName).Collection("vehicles")
 	return collection, func() {
 		client.Disconnect(context.Background())
 	}
@@ -96,6 +99,7 @@ func writeSeedData(dbURL string) {
 
 	collection, cleanup := getCollection(dbURL)
 	defer cleanup()
+
 	_, err := collection.InsertMany(context.TODO(), vehicles)
 	if err != nil {
 		log.Fatal(err)
@@ -120,6 +124,8 @@ func TestIntegration_MongoDBOperator_Lifecycle(t *testing.T) {
 	assert.NoError(t, err)
 
 	writeSeedData(dbURL)
+
+	assert.Equal(t, 5, getNumVehicles(dbURL))
 
 	{
 		assert.NoError(t, operator.Snapshot("v1"))
