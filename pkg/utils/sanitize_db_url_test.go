@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestSanitizeDBURL(t *testing.T) {
+func TestUnit_SanitizeDBURL(t *testing.T) {
 
 	input := "postgresql://admin:pw@localhost/main?sslmode=disable"
 	output, err := SanitizeDBURL(input)
