@@ -8,6 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"strings"
+	"time"
 )
 
 func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
@@ -39,7 +40,7 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
 }
 
 func snapshotDB(db *mongo.Client, originalDBName, snapshotName string) error {
-	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName)
+	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName, time.Now())
 	return cloneDB(db, originalDBName, fullSnapshotName)
 }
 
