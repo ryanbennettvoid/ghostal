@@ -8,5 +8,8 @@ dev-unit: check-gow
 dev-integration: check-gow
 	gow test -failfast -run Integration_ ./...
 
+test:
+	go test -failfast ./...
+
 install:
 	cd cmd/gho && go install
