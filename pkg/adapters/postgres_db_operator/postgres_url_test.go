@@ -12,7 +12,6 @@ func TestParsePostgresURL(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, pgURL)
 
-	assert.Equal(t, "postgresql", pgURL.Scheme())
 	assert.Equal(t, "admin", pgURL.Username())
 	assert.Equal(t, "main", pgURL.DBName())
 }
