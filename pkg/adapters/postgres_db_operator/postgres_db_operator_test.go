@@ -144,6 +144,8 @@ func TestIntegration_PostgresDBOperator_Lifecycle(t *testing.T) {
 
 	writeSeedData(dbURL)
 
+	assert.Equal(t, 5, getNumVehicles(dbURL))
+
 	{
 		assert.NoError(t, operator.Snapshot("v1"))
 	}
