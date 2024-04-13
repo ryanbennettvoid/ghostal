@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-const DBUser = "postgres"
+const DBUser = "gho_user"
 const DBPassword = "gho_pass"
 const DBName = "gho_db"
 const DBPort = "5432"
