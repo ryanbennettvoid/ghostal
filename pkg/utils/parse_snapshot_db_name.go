@@ -23,6 +23,6 @@ func ParseSnapshotDBName(dbName string) (SnapshotDBNameParts, error) {
 	name := strings.Join(partsWithoutPrefix[:len(partsWithoutPrefix)-1], "_")
 	return SnapshotDBNameParts{
 		Name:      name,
-		Timestamp: time.Unix(int64(timestamp/1000), 0),
+		Timestamp: time.UnixMilli(int64(timestamp)),
 	}, nil
 }
