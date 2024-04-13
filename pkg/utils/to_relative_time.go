@@ -5,9 +5,8 @@ import (
 	"time"
 )
 
-func ToRelativeTime(t time.Time) string {
-	now := time.Now()
-	diff := now.Sub(t)
+func ToRelativeTime(t time.Time, start time.Time) string {
+	diff := start.Sub(t)
 
 	seconds := int(diff.Seconds())
 	minutes := int(diff.Minutes())
