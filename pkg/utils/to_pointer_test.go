@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestToPointer(t *testing.T) {
+func TestUnit_ToPointer(t *testing.T) {
 	n := ToPointer(3)
 	assert.IsType(t, new(int), n)
 }

@@ -74,7 +74,7 @@ func (mo *MongoDBOperator) Restore(snapshotName string) error {
 	return values.SnapshotNotExistsErr
 }
 
-func (mo *MongoDBOperator) Remove(snapshotName string) error {
+func (mo *MongoDBOperator) Delete(snapshotName string) error {
 	db, close, err := mo.connect(true)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)

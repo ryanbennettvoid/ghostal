@@ -9,8 +9,9 @@ import (
 	"testing"
 )
 
-const DBUser = "gho_user"
+const DBUser = "postgres"
 const DBPassword = "gho_pass"
+const DBName = "gho_db"
 const DBPort = "5432"
 
 func createPostgresContainer() (string, func()) {
@@ -19,6 +20,7 @@ func createPostgresContainer() (string, func()) {
 		Image:        "postgres:15.1-alpine",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
+			"POSTGRES_DB":       DBName,
 			"POSTGRES_USER":     DBUser,
 			"POSTGRES_PASSWORD": DBPassword,
 		},
@@ -42,26 +44,48 @@ func createPostgresContainer() (string, func()) {
 		panic(err)
 	}
 
-	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/postgres?sslmode=disable", DBUser, DBPassword, host, mappedPort)
+	dbURL := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", DBUser, DBPassword, host, mappedPort.Port(), DBName)
 	return dbURL, func() {
 		_ = container.Terminate(ctx)
 	}
 }
 
-func TestPostgresDBOperator_Snapshot(t *testing.T) {
+func TestIntegration_PostgresDBOperator_Lifecycle(t *testing.T) {
 	dbURL, cleanup := createPostgresContainer()
 	defer cleanup()
 
 	operator, err := CreatePostgresDBOperator(dbURL)
 	assert.NoError(t, err)
 
-	allDatabases, err := operator.List()
-	assert.NoError(t, err)
-	assert.Len(t, allDatabases, 0)
+	{
+		err := operator.Snapshot("v1")
+		assert.NoError(t, err)
+	}
 
-	err = operator.Snapshot("v1")
-	assert.NoError(t, err)
+	{
+		allDatabases, err := operator.List()
+		assert.NoError(t, err)
+		assert.Len(t, allDatabases, 1)
+	}
 
-	//err = operator.Restore("v1")
-	//assert.NoError(t, err)
+	{
+		err := operator.Snapshot("v2")
+		assert.NoError(t, err)
+	}
+
+	{
+		allDatabases, err := operator.List()
+		assert.NoError(t, err)
+		assert.Len(t, allDatabases, 2)
+	}
+
+	{
+		err := operator.Restore("v1")
+		assert.NoError(t, err)
+	}
+
+	{
+		err := operator.Delete("v2")
+		assert.NoError(t, err)
+	}
 }
