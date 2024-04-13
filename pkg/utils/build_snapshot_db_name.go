@@ -6,6 +6,6 @@ import (
 	"time"
 )
 
-func BuildSnapshotDBName(snapshotName string) string {
-	return fmt.Sprintf("%s%s_%d", values.SnapshotDBPrefix, snapshotName, time.Now().UnixMilli())
+func BuildSnapshotDBName(snapshotName string, timestamp time.Time) string {
+	return fmt.Sprintf("%s%s_%d", values.SnapshotDBPrefix, snapshotName, timestamp.UnixMilli())
 }
