@@ -3,6 +3,7 @@ package json_file_config
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
 	"io/ioutil"
@@ -81,7 +82,7 @@ func (cm *JSONFileConfig) SelectProject(name string) error {
 			return cm.save()
 		}
 	}
-	return errors.New("project not found")
+	return fmt.Errorf("project \"%s\" not found", name)
 }
 
 func (cm *JSONFileConfig) GetProject(name *string) (definitions.Project, error) {

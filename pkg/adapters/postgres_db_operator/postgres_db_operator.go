@@ -38,7 +38,8 @@ func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 	err = db.Ping()
 	if err != nil {
 		_ = db.Close() // Ensure the connection is closed if not usable
-		return nil, nil, fmt.Errorf("failed to connect to database (%s): %w", dbURL, err)
+		sanitizedDBURL, _ := utils.SanitizeDBURL(dbURL)
+		return nil, nil, fmt.Errorf("failed to connect to database (%s): %w", sanitizedDBURL, err)
 	}
 	return db, func() {
 		_ = db.Close()
