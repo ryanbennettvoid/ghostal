@@ -39,7 +39,7 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
 }
 
 func snapshotDB(db *mongo.Client, originalDBName, snapshotName string) error {
-	fullSnapshotName := utils.BuildFullSnapshotName(snapshotName)
+	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName)
 	return cloneDB(db, originalDBName, fullSnapshotName)
 }
 
