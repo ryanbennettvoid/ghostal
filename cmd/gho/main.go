@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+var logger = app.GetGlobalLogger()
+
 func createOperator(dbURL string) (definitions.IDBOperator, error) {
 	scheme, err := utils.GetURLScheme(dbURL)
 	if err != nil {
@@ -34,10 +36,10 @@ var start = time.Now()
 
 func exit(err error) {
 	if err == nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Done in %.3fs.\n", time.Now().Sub(start).Seconds())
+		logger.Info("Done in %.3fs.\n", time.Now().Sub(start).Seconds())
 		os.Exit(0)
 	} else {
-		_, _ = fmt.Fprintf(os.Stderr, "ERR: %s\n", err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
@@ -66,6 +68,11 @@ func run(args app.ProgramArgs) error {
 		if err := cfg.InitProject(projectName, dbURL); err != nil {
 			return err
 		}
+		sanitizedDBURL, err := utils.SanitizeDBURL(dbURL)
+		if err != nil {
+			return fmt.Errorf("failed to sanitize database url: %w", err)
+		}
+		logger.Info("Created project \"%s\" with database \"%s\"", projectName, sanitizedDBURL)
 		return nil
 	}
 
@@ -77,8 +84,7 @@ func run(args app.ProgramArgs) error {
 		if err := cfg.SelectProject(newSelectedProject); err != nil {
 			return err
 		}
-		tableLogger := pretty_table_logger.NewPrettyTableLogger()
-		tableLogger.Log([]string{"Selected Project"}, [][]string{{newSelectedProject}})
+		logger.Info("Selected project \"%s\"", newSelectedProject)
 		return nil
 	}
 
@@ -91,6 +97,13 @@ func run(args app.ProgramArgs) error {
 		allProjects, err := cfg.GetAllProjects()
 		if err != nil {
 			return err
+		}
+		for idx := range allProjects {
+			sanitizedDBURL, err := utils.SanitizeDBURL(allProjects[idx].DBURL)
+			if err != nil {
+				return fmt.Errorf("failed to sanitize database url: %w", err)
+			}
+			allProjects[idx].DBURL = sanitizedDBURL
 		}
 		allProjects.Print(
 			pretty_table_logger.NewPrettyTableLogger(),
@@ -105,13 +118,17 @@ func run(args app.ProgramArgs) error {
 	}
 
 	var snapshotFn func(string) error
+	var snapshotMsg string
 	switch args.Command {
 	case app.SnapshotCommand:
 		snapshotFn = dbOperator.Snapshot
+		snapshotMsg = "Snapshot \"%s\" created."
 	case app.RestoreCommand:
 		snapshotFn = dbOperator.Restore
+		snapshotMsg = "Snapshot \"%s\" restored."
 	case app.RemoveCommand:
 		snapshotFn = dbOperator.Remove
+		snapshotMsg = "Snapshot \"%s\" removed."
 	}
 
 	if snapshotFn != nil {
@@ -125,6 +142,7 @@ func run(args app.ProgramArgs) error {
 		if err := snapshotFn(snapshotName); err != nil {
 			return err
 		}
+		logger.Info(snapshotMsg, snapshotName)
 		return nil
 	}
 
