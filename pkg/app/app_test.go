@@ -39,3 +39,8 @@ func TestUnit_App_Help(t *testing.T) {
 	assert.Contains(t, fullLog, "gho rm <snapshot_name>")
 	assert.Contains(t, fullLog, "gho ls")
 }
+
+//func TestUnit_App_Init(t *testing.T) {
+//	testLogger = memory_logger.NewMemoryLogger()
+//	assert.NoError(t, createAndRunApp("init xxx yyy"))
+//}
