@@ -180,6 +180,7 @@ func runTest(t *testing.T, dbUser string) {
 	{
 		allDatabases, err := operator.List()
 		assert.NoError(t, err)
-		assert.Len(t, allDatabases, 0)
+		assert.Len(t, allDatabases, 1)
+		assert.Equal(t, "v1", allDatabases[0].Name)
 	}
 }
