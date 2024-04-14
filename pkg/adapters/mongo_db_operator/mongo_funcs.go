@@ -29,10 +29,6 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
 	if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
 		return fmt.Errorf("failed to clone snapshot to oriignal: %w", err)
 	}
-	// drop snapshot
-	if err := dropDB(db, snapshotDBName); err != nil {
-		return fmt.Errorf("failed to drop snapshot: %w", err)
-	}
 	// drop backup
 	if err := dropDB(db, backupDBName); err != nil {
 		return fmt.Errorf("failed to drop backup: %w", err)
