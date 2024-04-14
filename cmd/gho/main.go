@@ -1,9 +1,11 @@
 package main
 
 import (
+	"ghostel/pkg/adapters/file_data_store"
 	"ghostel/pkg/adapters/logrus_logger"
-	"ghostel/pkg/adapters/pretty_table_logger"
+	"ghostel/pkg/adapters/pretty_table_builder"
 	"ghostel/pkg/app"
+	"ghostel/pkg/values"
 	"os"
 	"time"
 )
@@ -13,13 +15,13 @@ var (
 )
 
 var logger = logrus_logger.NewLogrusLogger()
-var tableLogger = pretty_table_logger.NewPrettyTableLogger()
+var tableBuilder = pretty_table_builder.NewPrettyTableBuilder()
 
 var start = time.Now()
 
 func exit(err error) {
 	if err == nil {
-		logger.Info("Done in %.3fs.\n", time.Now().Sub(start).Seconds())
+		logger.Passthrough("Done in %.3fs.\n", time.Now().Sub(start).Seconds())
 		os.Exit(0)
 	} else {
 		logger.Error(err.Error())
@@ -30,6 +32,7 @@ func exit(err error) {
 func main() {
 	executable := os.Args[0]
 	args := os.Args[1:]
-	app := app.NewApp(Version, logger, tableLogger)
-	exit(app.Run(executable, args))
+	app := app.NewApp(Version, logger, tableBuilder)
+	dataStore := file_data_store.NewFileDataStore(values.DefaultConfigFilepath)
+	exit(app.Run(dataStore, executable, args))
 }

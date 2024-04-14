@@ -6,28 +6,23 @@ import (
 	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
 type JSONFileConfig struct {
-	FilePath   string
+	dataStore  definitions.IDataStore
 	ConfigData definitions.ConfigData
 }
 
-func NewJSONFileConfig(filePath string) *JSONFileConfig {
+func NewJSONFileConfig(dataStore definitions.IDataStore) *JSONFileConfig {
 	return &JSONFileConfig{
-		FilePath: filePath,
+		dataStore: dataStore,
 	}
 }
 
 func (cm *JSONFileConfig) load() error {
-	data, err := ioutil.ReadFile(cm.FilePath)
+	data, err := cm.dataStore.Load()
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil // No file yet, start with empty config
-		}
 		return err
 	}
 	return json.Unmarshal(data, &cm.ConfigData)
@@ -38,7 +33,7 @@ func (cm *JSONFileConfig) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(cm.FilePath, data, 0644)
+	return cm.dataStore.Save(data)
 }
 
 func (cm *JSONFileConfig) InitProject(name, dbURL string) error {
