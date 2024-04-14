@@ -15,12 +15,14 @@ import (
 var NoArgsProvidedError = errors.New("no arguments provided")
 
 type App struct {
+	version     string
 	logger      definitions.ILogger
 	tableLogger definitions.ITableLogger
 }
 
-func NewApp(logger definitions.ILogger, tableLogger definitions.ITableLogger) *App {
+func NewApp(version string, logger definitions.ILogger, tableLogger definitions.ITableLogger) *App {
 	return &App{
+		version:     version,
 		logger:      logger,
 		tableLogger: tableLogger,
 	}
@@ -56,7 +58,12 @@ func (a *App) parseProgramArgs(args []string) (ProgramArgs, error) {
 	}, nil
 }
 
-func (a *App) help(executable string) {
+func (a *App) printVersion(executable string) error {
+	fmt.Printf("%s version %s\n", executable, a.version)
+	return nil
+}
+
+func (a *App) printHelp(executable string) error {
 	appDescription := "\nGhostel (gho) is a database snapshot/restore tool for MongoDB and Postgres."
 	fmt.Println(appDescription)
 	fmt.Println()
@@ -67,123 +74,154 @@ func (a *App) help(executable string) {
 	}
 	a.tableLogger.Log(columns, rows)
 	fmt.Println()
+	return nil
 }
 
-func (a *App) Run(executable string, programArgs []string) error {
-
-	args, err := a.parseProgramArgs(programArgs)
+func (a *App) initProject(cfg definitions.IConfig, args ProgramArgs) error {
+	projectName, err := args.Options.Get(0, "project name")
 	if err != nil {
-		if err == NoArgsProvidedError {
-			a.help(executable)
-			return nil
-		}
 		return err
 	}
-
-	if args.Command == HelpCommand {
-		a.help(executable)
-		return nil
+	dbURL, err := args.Options.Get(1, "database URL")
+	if err != nil {
+		return err
 	}
+	if err := cfg.InitProject(projectName, dbURL); err != nil {
+		return err
+	}
+	sanitizedDBURL, err := utils.SanitizeDBURL(dbURL)
+	if err != nil {
+		return fmt.Errorf("failed to sanitize database url: %w", err)
+	}
+	a.logger.Info("Created project \"%s\" with database \"%s\"", projectName, sanitizedDBURL)
+	return nil
+}
 
-	cfg := json_file_config.NewJSONFileConfig(values.ConfigFilename)
+func (a *App) selectProject(cfg definitions.IConfig, args ProgramArgs) error {
+	projectName, err := args.Options.Get(0, "project name")
+	if err != nil {
+		return err
+	}
+	if err := cfg.SelectProject(projectName); err != nil {
+		return err
+	}
+	a.logger.Info("Selected project \"%s\"", projectName)
+	return nil
+}
 
-	if args.Command == InitCommand {
-		projectName, err := args.Options.Get(0, "project name")
-		if err != nil {
-			return err
-		}
-		dbURL, err := args.Options.Get(1, "database URL")
-		if err != nil {
-			return err
-		}
-		if err := cfg.InitProject(projectName, dbURL); err != nil {
-			return err
-		}
-		sanitizedDBURL, err := utils.SanitizeDBURL(dbURL)
+func (a *App) printStatus(cfg definitions.IConfig) error {
+	allProjects, err := cfg.GetAllProjects()
+	if err != nil {
+		return err
+	}
+	for idx := range allProjects {
+		sanitizedDBURL, err := utils.SanitizeDBURL(allProjects[idx].DBURL)
 		if err != nil {
 			return fmt.Errorf("failed to sanitize database url: %w", err)
 		}
-		a.logger.Info("Created project \"%s\" with database \"%s\"", projectName, sanitizedDBURL)
-		return nil
+		allProjects[idx].DBURL = sanitizedDBURL
 	}
-
-	if args.Command == SelectCommand {
-		newSelectedProject, err := args.Options.Get(0, "project name")
-		if err != nil {
-			return err
-		}
-		if err := cfg.SelectProject(newSelectedProject); err != nil {
-			return err
-		}
-		a.logger.Info("Selected project \"%s\"", newSelectedProject)
-		return nil
-	}
-
 	selectedProject, err := cfg.GetProject(nil)
 	if err != nil {
 		return err
 	}
+	allProjects.Print(
+		pretty_table_logger.NewPrettyTableLogger(),
+		selectedProject.Name,
+	)
+	return nil
+}
 
-	if args.Command == StatusCommand {
-		allProjects, err := cfg.GetAllProjects()
-		if err != nil {
-			return err
-		}
-		for idx := range allProjects {
-			sanitizedDBURL, err := utils.SanitizeDBURL(allProjects[idx].DBURL)
-			if err != nil {
-				return fmt.Errorf("failed to sanitize database url: %w", err)
-			}
-			allProjects[idx].DBURL = sanitizedDBURL
-		}
-		allProjects.Print(
-			pretty_table_logger.NewPrettyTableLogger(),
-			selectedProject.Name,
-		)
-		return nil
+func (a *App) getDBOperator(cfg definitions.IConfig) (definitions.IDBOperator, error) {
+	selectedProject, err := cfg.GetProject(nil)
+	if err != nil {
+		return nil, err
 	}
-
 	dbOperator, err := a.createOperator(selectedProject.DBURL)
+	if err != nil {
+		return nil, err
+	}
+	return dbOperator, nil
+}
+
+func (a *App) snapshotCommand(cfg definitions.IConfig, args ProgramArgs, operation string) error {
+	snapshotName, err := args.Options.Get(0, "project name")
 	if err != nil {
 		return err
 	}
+	dbOperator, err := a.getDBOperator(cfg)
+	if err != nil {
+		return err
+	}
+	switch operation {
+	case "create":
+		if err := dbOperator.Snapshot(snapshotName); err != nil {
+			return err
+		}
+	case "restore":
+		if err := dbOperator.Restore(snapshotName); err != nil {
+			return err
+		}
+	case "delete":
+		if err := dbOperator.Delete(snapshotName); err != nil {
+			return err
+		}
+	default:
+		return errors.New("invalid operation")
+	}
+	a.logger.Info("Snapshot \"%s\" created.")
+	return nil
+}
 
-	var snapshotFn func(string) error
-	var snapshotMsg string
+func (a *App) listSnapshots(cfg definitions.IConfig) error {
+	dbOperator, err := a.getDBOperator(cfg)
+	if err != nil {
+		return err
+	}
+	listItems, err := dbOperator.List()
+	if err != nil {
+		return err
+	}
+	listItems.Print(pretty_table_logger.NewPrettyTableLogger())
+	return nil
+}
+
+func (a *App) Run(executable string, programArgs []string) error {
+	args, err := a.parseProgramArgs(programArgs)
+	if err != nil {
+		if err == NoArgsProvidedError {
+			return a.printHelp(executable)
+		}
+		return err
+	}
+
+	switch args.Command {
+	case VersionCommand:
+		return a.printVersion(executable)
+	case HelpCommand:
+		return a.printHelp(executable)
+	}
+
+	cfg := json_file_config.NewJSONFileConfig(values.ConfigFilename)
+
+	switch args.Command {
+	case InitCommand:
+		return a.initProject(cfg, args)
+	case SelectCommand:
+		return a.selectProject(cfg, args)
+	case StatusCommand:
+		return a.printStatus(cfg)
+	}
+
 	switch args.Command {
 	case SnapshotCommand:
-		snapshotFn = dbOperator.Snapshot
-		snapshotMsg = "Snapshot \"%s\" created."
+		return a.snapshotCommand(cfg, args, "create")
 	case RestoreCommand:
-		snapshotFn = dbOperator.Restore
-		snapshotMsg = "Snapshot \"%s\" restored."
-	case RemoveCommand:
-		snapshotFn = dbOperator.Delete
-		snapshotMsg = "Snapshot \"%s\" removed."
-	}
-
-	if snapshotFn != nil {
-		snapshotName, err := args.Options.Get(0, "snapshot name")
-		if err != nil {
-			return err
-		}
-		if len(snapshotName) == 0 {
-			return errors.New("snapshot name must be specified")
-		}
-		if err := snapshotFn(snapshotName); err != nil {
-			return err
-		}
-		a.logger.Info(snapshotMsg, snapshotName)
-		return nil
-	}
-
-	if args.Command == ListCommand {
-		listItems, err := dbOperator.List()
-		if err != nil {
-			return err
-		}
-		listItems.Print(pretty_table_logger.NewPrettyTableLogger())
-		return nil
+		return a.snapshotCommand(cfg, args, "restore")
+	case DeleteCommand:
+		return a.snapshotCommand(cfg, args, "delete")
+	case ListCommand:
+		return a.listSnapshots(cfg)
 	}
 
 	fullHelpCommand := fmt.Sprintf("%s help", executable)

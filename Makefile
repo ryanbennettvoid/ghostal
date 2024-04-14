@@ -17,5 +17,8 @@ test:
 deps:
 	go mod tidy && go mod vendor
 
+VERSION := $(shell git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
+
 install: deps
-	cd cmd/gho && go install
+	cd cmd/gho && go install -ldflags="-X 'main.Version=${VERSION}'"
+
