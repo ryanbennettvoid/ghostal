@@ -40,5 +40,5 @@ type IConfig interface {
 	SelectProject(name string) error
 	GetProject(name *string) (Project, error)
 	SetProject(name *string, value Project) error
-	GetAllProjects() ([]Project, error)
+	GetAllProjects() (ProjectsList, error)
 }
