@@ -6,25 +6,23 @@ import (
 	"ghostel/pkg/adapters/json_file_config"
 	"ghostel/pkg/adapters/mongo_db_operator"
 	"ghostel/pkg/adapters/postgres_db_operator"
-	"ghostel/pkg/adapters/pretty_table_logger"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
-	"ghostel/pkg/values"
 )
 
 var NoArgsProvidedError = errors.New("no arguments provided")
 
 type App struct {
-	version     string
-	logger      definitions.ILogger
-	tableLogger definitions.ITableLogger
+	version      string
+	logger       definitions.ILogger
+	tableBuilder definitions.ITableBuilder
 }
 
-func NewApp(version string, logger definitions.ILogger, tableLogger definitions.ITableLogger) *App {
+func NewApp(version string, logger definitions.ILogger, tableBuilder definitions.ITableBuilder) *App {
 	return &App{
-		version:     version,
-		logger:      logger,
-		tableLogger: tableLogger,
+		version:      version,
+		logger:       logger,
+		tableBuilder: tableBuilder,
 	}
 }
 
@@ -59,21 +57,21 @@ func (a *App) parseProgramArgs(args []string) (ProgramArgs, error) {
 }
 
 func (a *App) printVersion(executable string) error {
-	fmt.Printf("%s version %s\n", executable, a.version)
+	a.logger.Passthrough("%s version %s\n", executable, a.version)
 	return nil
 }
 
 func (a *App) printHelp(executable string) error {
 	appDescription := "\nGhostel (gho) is a database snapshot/restore tool for MongoDB and Postgres."
-	fmt.Println(appDescription)
-	fmt.Println()
+	a.logger.Passthrough(appDescription)
+	a.logger.Passthrough("")
 	columns := []string{"Command", "Description"}
 	rows := make([][]string, 0)
 	for _, command := range AllCommands(executable) {
 		rows = append(rows, command.Row())
 	}
-	a.tableLogger.Log(columns, rows)
-	fmt.Println()
+	a.logger.Passthrough(a.tableBuilder.BuildTable(columns, rows))
+	a.logger.Passthrough("")
 	return nil
 }
 
@@ -93,7 +91,7 @@ func (a *App) initProject(cfg definitions.IConfig, args ProgramArgs) error {
 	if err != nil {
 		return fmt.Errorf("failed to sanitize database url: %w", err)
 	}
-	a.logger.Info("Created project \"%s\" with database \"%s\"", projectName, sanitizedDBURL)
+	a.logger.Passthrough("Created project \"%s\" with database \"%s\"\n", projectName, sanitizedDBURL)
 	return nil
 }
 
@@ -105,7 +103,7 @@ func (a *App) selectProject(cfg definitions.IConfig, args ProgramArgs) error {
 	if err := cfg.SelectProject(projectName); err != nil {
 		return err
 	}
-	a.logger.Info("Selected project \"%s\"", projectName)
+	a.logger.Passthrough("Selected project \"%s\"\n", projectName)
 	return nil
 }
 
@@ -125,10 +123,8 @@ func (a *App) printStatus(cfg definitions.IConfig) error {
 	if err != nil {
 		return err
 	}
-	allProjects.Print(
-		pretty_table_logger.NewPrettyTableLogger(),
-		selectedProject.Name,
-	)
+	columns, rows := allProjects.TableInfo(selectedProject.Name)
+	a.logger.Passthrough(a.tableBuilder.BuildTable(columns, rows))
 	return nil
 }
 
@@ -169,7 +165,7 @@ func (a *App) snapshotCommand(cfg definitions.IConfig, args ProgramArgs, operati
 	default:
 		return errors.New("invalid operation")
 	}
-	a.logger.Info("Snapshot \"%s\" created.")
+	a.logger.Passthrough("Snapshot \"%s\" %sd.\n", snapshotName, operation)
 	return nil
 }
 
@@ -182,11 +178,12 @@ func (a *App) listSnapshots(cfg definitions.IConfig) error {
 	if err != nil {
 		return err
 	}
-	listItems.Print(pretty_table_logger.NewPrettyTableLogger())
+	columns, rows := listItems.TableInfo()
+	a.logger.Passthrough(a.tableBuilder.BuildTable(columns, rows))
 	return nil
 }
 
-func (a *App) Run(executable string, programArgs []string) error {
+func (a *App) Run(dataStore definitions.IDataStore, executable string, programArgs []string) error {
 	args, err := a.parseProgramArgs(programArgs)
 	if err != nil {
 		if err == NoArgsProvidedError {
@@ -202,7 +199,7 @@ func (a *App) Run(executable string, programArgs []string) error {
 		return a.printHelp(executable)
 	}
 
-	cfg := json_file_config.NewJSONFileConfig(values.ConfigFilename)
+	cfg := json_file_config.NewJSONFileConfig(dataStore)
 
 	switch args.Command {
 	case InitCommand:
