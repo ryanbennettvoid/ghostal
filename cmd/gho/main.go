@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ghostel/pkg/adapters/pretty_table_logger"
 	"ghostel/pkg/app"
 	"os"
 	"time"
@@ -21,6 +22,8 @@ func exit(err error) {
 }
 
 func main() {
-	app := app.NewApp(logger)
-	exit(app.Run(os.Args[1:]))
+	app := app.NewApp(logger, pretty_table_logger.NewPrettyTableLogger())
+	executable := os.Args[0]
+	args := os.Args[1:]
+	exit(app.Run(executable, args))
 }

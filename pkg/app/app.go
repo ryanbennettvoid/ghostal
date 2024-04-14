@@ -12,12 +12,18 @@ import (
 	"ghostel/pkg/values"
 )
 
+var NoArgsProvidedError = errors.New("no arguments provided")
+
 type App struct {
-	logger definitions.ILogger
+	logger      definitions.ILogger
+	tableLogger definitions.ITableLogger
 }
 
-func NewApp(logger definitions.ILogger) *App {
-	return &App{logger: logger}
+func NewApp(logger definitions.ILogger, tableLogger definitions.ITableLogger) *App {
+	return &App{
+		logger:      logger,
+		tableLogger: tableLogger,
+	}
 }
 
 func (a *App) createOperator(dbURL string) (definitions.IDBOperator, error) {
@@ -37,7 +43,7 @@ func (a *App) createOperator(dbURL string) (definitions.IDBOperator, error) {
 
 func (a *App) parseProgramArgs(args []string) (ProgramArgs, error) {
 	if len(args) == 0 || len(args[0]) == 0 {
-		return ProgramArgs{}, errors.New("invalid args")
+		return ProgramArgs{}, NoArgsProvidedError
 	}
 	command := Command(args[0])
 	options := make([]string, 0)
@@ -50,11 +56,33 @@ func (a *App) parseProgramArgs(args []string) (ProgramArgs, error) {
 	}, nil
 }
 
-func (a *App) Run(programArgs []string) error {
+func (a *App) help(executable string) {
+	appDescription := "\nGhostel (gho) is a database snapshot/restore tool for MongoDB and Postgres."
+	fmt.Println(appDescription)
+	fmt.Println()
+	columns := []string{"Command", "Description"}
+	rows := make([][]string, 0)
+	for _, command := range AllCommands(executable) {
+		rows = append(rows, command.Row())
+	}
+	a.tableLogger.Log(columns, rows)
+	fmt.Println()
+}
+
+func (a *App) Run(executable string, programArgs []string) error {
 
 	args, err := a.parseProgramArgs(programArgs)
 	if err != nil {
+		if err == NoArgsProvidedError {
+			a.help(executable)
+			return nil
+		}
 		return err
+	}
+
+	if args.Command == HelpCommand {
+		a.help(executable)
+		return nil
 	}
 
 	cfg := json_file_config.NewJSONFileConfig(values.ConfigFilename)
@@ -158,5 +186,6 @@ func (a *App) Run(programArgs []string) error {
 		return nil
 	}
 
-	return fmt.Errorf("unknown command \"%s\"", args.Command)
+	fullHelpCommand := fmt.Sprintf("%s help", executable)
+	return fmt.Errorf("unknown command \"%s\" - run \"%s\" for help", args.Command, fullHelpCommand)
 }
