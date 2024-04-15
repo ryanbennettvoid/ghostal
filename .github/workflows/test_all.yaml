@@ -19,6 +19,9 @@ jobs:
         options: --privileged
         ports:
           - 2375:2375
+        credentials:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
     steps:
       - name: Checkout code
