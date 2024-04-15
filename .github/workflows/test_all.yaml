@@ -24,7 +24,7 @@ jobs:
 
       - name: Cleanup Before
         if: always()
-        run: docker system prune -a --volumes
+        run: docker system prune -a --volumes --force
 
       - name: Build and Install
         run: make install
@@ -34,4 +34,4 @@ jobs:
 
       - name: Cleanup After
         if: always()
-        run: docker system prune -a --volumes
+        run: docker system prune -a --volumes --force
