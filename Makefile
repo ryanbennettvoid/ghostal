@@ -14,6 +14,12 @@ dev: check-gow
 test: deps
 	go test -failfast ./...
 
+test-unit: deps
+	go test -failfast -run Unit_ ./...
+
+test-integration: deps
+	go test -failfast -run Integration_ ./...
+
 deps:
 	go mod tidy && go mod vendor
 

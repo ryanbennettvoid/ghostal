@@ -1,4 +1,4 @@
-name: Go Test Workflow
+name: Integration Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    name: Run Go tests with Docker
+    name: Run Go integration tests with Docker
     runs-on: ubuntu-latest
 
     steps:
@@ -29,8 +29,8 @@ jobs:
       - name: Build and Install
         run: make install
 
-      - name: Test
-        run: make test
+      - name: Integration Tests
+        run: make test-integration
 
       - name: Cleanup After
         if: always()
