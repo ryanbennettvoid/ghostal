@@ -49,12 +49,17 @@ gho select my_local_pg
 
 ## Supporting other databases
 
-If you want to add support for other databases, just implement the `IDBOperator` interface:
+If you want to add support for other databases, just implement interfaces:
 ```go
 type IDBOperator interface {
-	Snapshot(snapshotName string) error
-	Restore(snapshotName string) error
-	Delete(snapshotName string) error
-	List() (List, error)
+  Snapshot(snapshotName string) error
+  Restore(snapshotName string) error
+  Delete(snapshotName string) error
+  List() (List, error)
+}
+
+type IDBOperatorBuilder interface {
+  ID() string
+  BuildOperator(dbURL string) (IDBOperator, error)
 }
 ```

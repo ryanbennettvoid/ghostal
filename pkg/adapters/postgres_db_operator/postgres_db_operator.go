@@ -13,14 +13,12 @@ type PostgresDBOperator struct {
 	pgURL *PostgresURL
 }
 
-func CreatePostgresDBOperator(dbURL string) (*PostgresDBOperator, error) {
-	pgURL, err := ParsePostgresURL(dbURL)
+func (p *PostgresDBOperator) SupportsDatabase(dbURL string) (bool, error) {
+	scheme, err := utils.GetURLScheme(dbURL)
 	if err != nil {
-		return nil, err
+		return false, fmt.Errorf("failed to get URL scheme: %w", err)
 	}
-	return &PostgresDBOperator{
-		pgURL: pgURL,
-	}, nil
+	return scheme == "postgresql", nil
 }
 
 func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
