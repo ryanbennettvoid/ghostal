@@ -13,16 +13,6 @@ type PostgresDBOperator struct {
 	pgURL *PostgresURL
 }
 
-func CreatePostgresDBOperator(dbURL string) (*PostgresDBOperator, error) {
-	pgURL, err := ParsePostgresURL(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	return &PostgresDBOperator{
-		pgURL: pgURL,
-	}, nil
-}
-
 func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 	dbURL := p.pgURL.dbURL.String()
 	if useDefault {

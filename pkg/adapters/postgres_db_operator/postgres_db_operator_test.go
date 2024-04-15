@@ -67,7 +67,7 @@ func runTest(t *testing.T, dbUser string) {
 	dbURL, cleanup := createPostgresContainer(dbUser)
 	defer cleanup()
 
-	operator, err := CreatePostgresDBOperator(dbURL)
+	operator, err := (&PostgresDBOperatorBuilder{}).BuildOperator(dbURL)
 	assert.NoError(t, err)
 
 	WritePostgresSeedData(dbURL)
