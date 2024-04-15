@@ -81,7 +81,7 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 	return list, nil
 }
 
-func restoreDB(db *sql.DB, originalDBName, snapshotDBName string) error {
+func restoreDB(db *sql.DB, originalDBName, snapshotDBName, originalDBOwner string) error {
 
 	// backup original via rename
 	backupSnapshotName := "temp_emergency_backup_" + originalDBName
@@ -89,9 +89,11 @@ func restoreDB(db *sql.DB, originalDBName, snapshotDBName string) error {
 		return fmt.Errorf("failed to rename snapshot: %w", err)
 	}
 
-	// restore snapshot to original via rename
-	if err := renameDB(db, snapshotDBName, originalDBName); err != nil {
-		return fmt.Errorf("failed to rename snapshot: %w", err)
+	// restore snapshot to original via template
+	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", originalDBName, snapshotDBName, originalDBOwner)
+	_, err := db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to create template database (%s): %w", query, err)
 	}
 
 	// delete backup
@@ -107,8 +109,8 @@ func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
-	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName, time.Now())
-	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", fullSnapshotName, originalDBName, originalDBOwner)
+	snapshotDBName := utils.BuildSnapshotDBName(snapshotName, time.Now())
+	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", snapshotDBName, originalDBName, originalDBOwner)
 	_, err := db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("failed to create snapshot (%s): %w", query, err)

@@ -10,7 +10,9 @@ type PostgresURL struct {
 
 func (p *PostgresURL) Clone() *url.URL {
 	clone := *p.dbURL
-	clone.User = &(*p.dbURL.User)
+	if p.dbURL.User != nil {
+		clone.User = &(*p.dbURL.User)
+	}
 	return &clone
 }
 

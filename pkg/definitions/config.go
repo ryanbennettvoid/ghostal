@@ -13,7 +13,7 @@ type Project struct {
 
 type ProjectsList []Project
 
-func (p ProjectsList) Print(logger ITableLogger, selectedProjectName string) {
+func (p ProjectsList) TableInfo(selectedProjectName string) ([]string, [][]string) {
 	columns := []string{"Projects", "Database URL", "Created", ""}
 	rows := make([][]string, 0)
 	for _, p := range p {
@@ -27,11 +27,11 @@ func (p ProjectsList) Print(logger ITableLogger, selectedProjectName string) {
 		formattedTime := p.CreatedAt.Format("2006-01-02 15:04:05")
 		rows = append(rows, []string{name, p.DBURL, relativeTime, formattedTime})
 	}
-	logger.Log(columns, rows)
+	return columns, rows
 }
 
 type ConfigData struct {
-	SelectedProject *string   `json:"selectedProject"`
+	SelectedProject string    `json:"selectedProject"`
 	Projects        []Project `json:"projects"`
 }
 
@@ -40,5 +40,5 @@ type IConfig interface {
 	SelectProject(name string) error
 	GetProject(name *string) (Project, error)
 	SetProject(name *string, value Project) error
-	GetAllProjects() ([]Project, error)
+	GetAllProjects() (ProjectsList, error)
 }

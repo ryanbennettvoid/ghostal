@@ -91,7 +91,8 @@ func (p *PostgresDBOperator) Restore(snapshotName string) error {
 		if item.Name == snapshotName {
 			originalDBName := p.pgURL.DBName()
 			snapshotDBName := item.DBName
-			if err := restoreDB(db, originalDBName, snapshotDBName); err != nil {
+			originalDBOwner := p.pgURL.Username()
+			if err := restoreDB(db, originalDBName, snapshotDBName, originalDBOwner); err != nil {
 				return err
 			}
 			return nil
