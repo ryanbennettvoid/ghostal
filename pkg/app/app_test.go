@@ -10,6 +10,7 @@ import (
 	"ghostel/pkg/adapters/postgres_db_operator"
 	"ghostel/pkg/adapters/pretty_table_builder"
 	"ghostel/pkg/definitions"
+	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -126,6 +127,9 @@ func createPostgresContainer() (string, func()) {
 	dbName := "mydb"
 	username := "pguser"
 	password := "pgpass"
+	memoryLimitModifier := func(hc *container.HostConfig) {
+		hc.Memory = 100 * 1024 * 1024
+	}
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:15.1-alpine",
@@ -135,7 +139,8 @@ func createPostgresContainer() (string, func()) {
 			"POSTGRES_USER":     username,
 			"POSTGRES_PASSWORD": password,
 		},
-		WaitingFor: wait.ForListeningPort("5432/tcp"),
+		WaitingFor:         wait.ForListeningPort("5432/tcp"),
+		HostConfigModifier: memoryLimitModifier,
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
