@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"ghostel/pkg/definitions"
+	"ghostel/pkg/utils"
 	"ghostel/pkg/values"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,6 +22,14 @@ func CreateMongoDBOperator(dbURL string) (*MongoDBOperator, error) {
 	return &MongoDBOperator{
 		mongoURL: mongoURL,
 	}, nil
+}
+
+func (mo *MongoDBOperator) SupportsDatabase(dbURL string) (bool, error) {
+	scheme, err := utils.GetURLScheme(dbURL)
+	if err != nil {
+		return false, fmt.Errorf("failed to get URL scheme: %w", err)
+	}
+	return scheme == "mongodb", nil
 }
 
 func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), error) {

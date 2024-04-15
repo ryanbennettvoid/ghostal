@@ -26,6 +26,7 @@ func (list List) TableInfo() ([]string, [][]string) {
 }
 
 type IDBOperator interface {
+	SupportsDatabase(dbURL string) (bool, error)
 	Snapshot(snapshotName string) error
 	Restore(snapshotName string) error
 	Delete(snapshotName string) error
