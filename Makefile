@@ -11,7 +11,7 @@ dev-integration: check-gow
 dev: check-gow
 	gow test -failfast ./...
 
-test:
+test: deps
 	go test -failfast ./...
 
 deps:
