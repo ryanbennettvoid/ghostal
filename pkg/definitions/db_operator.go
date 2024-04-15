@@ -13,7 +13,7 @@ type ListResult struct {
 
 type List []ListResult
 
-func (list List) Print(logger ITableLogger) {
+func (list List) TableInfo() ([]string, [][]string) {
 	columns := []string{"Name", "Created", "Timestamp"}
 	rows := make([][]string, len(list))
 	for idx := range list {
@@ -22,7 +22,7 @@ func (list List) Print(logger ITableLogger) {
 		formattedTime := item.CreatedAt.Format("2006-01-02 15:04:05")
 		rows[idx] = []string{item.Name, relativeTime, formattedTime}
 	}
-	logger.Log(columns, rows)
+	return columns, rows
 }
 
 type IDBOperator interface {

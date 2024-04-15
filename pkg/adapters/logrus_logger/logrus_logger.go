@@ -1,6 +1,7 @@
 package logrus_logger
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"os"
 )
@@ -17,6 +18,14 @@ func NewLogrusLogger() *LogrusLogger {
 
 	return &LogrusLogger{
 		logger: instance,
+	}
+}
+
+func (l *LogrusLogger) Passthrough(msg string, keysAndValues ...interface{}) {
+	if len(keysAndValues) == 0 {
+		fmt.Println(msg)
+	} else {
+		fmt.Printf(msg, keysAndValues...)
 	}
 }
 

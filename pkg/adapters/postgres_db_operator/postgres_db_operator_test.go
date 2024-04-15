@@ -2,7 +2,6 @@ package postgres_db_operator
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
@@ -50,85 +49,8 @@ func createPostgresContainer(dbUser string) (string, func()) {
 	}
 }
 
-// runQuery executes a query and returns the results as a slice of maps where each map represents a row.
-func runQuery(dbURL, query string) []map[string]interface{} {
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		panic(fmt.Errorf("failed to open database: %v", err))
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		panic(fmt.Errorf("failed to connect to database: %v", err))
-	}
-
-	rows, err := db.Query(query)
-	if err != nil {
-		panic(fmt.Errorf("failed to execute query: %v", err))
-	}
-	defer rows.Close()
-
-	columns, err := rows.Columns()
-	if err != nil {
-		panic(fmt.Errorf("failed to get columns: %v", err))
-	}
-
-	// Prepare a slice to hold the values and a slice of interfaces for scanning.
-	count := len(columns)
-	values := make([]interface{}, count)
-	valuePtrs := make([]interface{}, count)
-
-	for i := range values {
-		valuePtrs[i] = &values[i]
-	}
-
-	var results []map[string]interface{}
-
-	// Fetch rows and scan into a map.
-	for rows.Next() {
-		err := rows.Scan(valuePtrs...)
-		if err != nil {
-			panic(fmt.Errorf("failed to scan row: %v", err))
-		}
-
-		rowMap := make(map[string]interface{})
-		for i, col := range columns {
-			val := valuePtrs[i].(*interface{})
-			rowMap[col] = *val
-		}
-		results = append(results, rowMap)
-	}
-
-	if err := rows.Err(); err != nil {
-		panic(fmt.Errorf("error processing rows: %v", err))
-	}
-
-	return results
-}
-
-func writeSeedData(dbURL string) {
-	runQuery(dbURL, `
-		CREATE TABLE vehicles (
-			id SERIAL PRIMARY KEY,
-			make VARCHAR(50),
-			model VARCHAR(50),
-			year INT,
-			color VARCHAR(50)
-		);
-	`)
-	runQuery(dbURL, `
-		INSERT INTO vehicles (make, model, year, color) VALUES
-		('Toyota', 'Camry', 2022, 'Black'),
-		('Ford', 'Mustang', 2021, 'Red'),
-		('Honda', 'Civic', 2020, 'Blue'),
-		('Tesla', 'Model 3', 2023, 'White'),
-		('Chevrolet', 'Impala', 2019, 'Silver');
-	`)
-}
-
 func getNumVehicles(dbURL string) int {
-	results := runQuery(dbURL, `
+	results := PostgresRunQuery(dbURL, `
 		SELECT * FROM vehicles
 	`)
 	return len(results)
@@ -148,7 +70,7 @@ func runTest(t *testing.T, dbUser string) {
 	operator, err := CreatePostgresDBOperator(dbURL)
 	assert.NoError(t, err)
 
-	writeSeedData(dbURL)
+	WritePostgresSeedData(dbURL)
 
 	assert.Equal(t, 5, getNumVehicles(dbURL))
 
@@ -176,7 +98,7 @@ func runTest(t *testing.T, dbUser string) {
 
 	{
 		// modify DB before restoring snapshot
-		runQuery(dbURL, `
+		PostgresRunQuery(dbURL, `
 			DELETE FROM vehicles WHERE year < 2022
 		`)
 	}
@@ -198,6 +120,7 @@ func runTest(t *testing.T, dbUser string) {
 	{
 		allDatabases, err := operator.List()
 		assert.NoError(t, err)
-		assert.Len(t, allDatabases, 0)
+		assert.Len(t, allDatabases, 1)
+		assert.Equal(t, "v1", allDatabases[0].Name)
 	}
 }

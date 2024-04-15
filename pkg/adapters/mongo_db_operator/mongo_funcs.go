@@ -2,6 +2,7 @@ package mongo_db_operator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
@@ -28,10 +29,6 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
 	// copy snapshot to original
 	if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
 		return fmt.Errorf("failed to clone snapshot to oriignal: %w", err)
-	}
-	// drop snapshot
-	if err := dropDB(db, snapshotDBName); err != nil {
-		return fmt.Errorf("failed to drop snapshot: %w", err)
 	}
 	// drop backup
 	if err := dropDB(db, backupDBName); err != nil {
@@ -82,6 +79,10 @@ func cloneDB(db *mongo.Client, sourceDBName, targetDBName string) error {
 	collections, err := srcDB.ListCollectionNames(context.TODO(), bson.D{})
 	if err != nil {
 		return fmt.Errorf("failed to list collection names: %w", err)
+	}
+
+	if len(collections) == 0 {
+		return errors.New("cannot clone: source database has no collections")
 	}
 
 	// Iterate over each collection in the source database
