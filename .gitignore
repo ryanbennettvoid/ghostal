@@ -25,3 +25,4 @@ go.work
 
 # Config
 .ghostel
+.env
