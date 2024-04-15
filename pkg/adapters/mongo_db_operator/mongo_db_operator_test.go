@@ -71,7 +71,7 @@ func runTest(t *testing.T, dbUser string) {
 	dbURL, cleanup := createMongoContainer(dbUser)
 	defer cleanup()
 
-	operator, err := CreateMongoDBOperator(dbURL)
+	operator, err := (&MongoDBOperatorBuilder{}).BuildOperator(dbURL)
 	assert.NoError(t, err)
 
 	WriteMongoDBSeedData(dbURL)
