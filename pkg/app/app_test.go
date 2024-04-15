@@ -18,6 +18,11 @@ import (
 	"time"
 )
 
+var testDBOperatorBuilders = []definitions.IDBOperatorBuilder{
+	&postgres_db_operator.PostgresDBOperatorBuilder{},
+	&mongo_db_operator.MongoDBOperatorBuilder{},
+}
+
 var testAppVersion = "v0.0.0"
 var testLogger *memory_logger.MemoryLogger
 var testTableBuilder = pretty_table_builder.NewPrettyTableBuilder()
@@ -30,7 +35,7 @@ func createAndRunApp(programArgs string) error {
 
 func createAndRunAppWithDataStore(dataStore definitions.IDataStore, programArgs string) error {
 	testLogger = memory_logger.NewMemoryLogger()
-	app := NewApp(testAppVersion, testLogger, testTableBuilder)
+	app := NewApp(testAppVersion, testDBOperatorBuilders, testLogger, testTableBuilder)
 	return app.Run(dataStore, "gho", strings.Split(programArgs, " "))
 }
 
