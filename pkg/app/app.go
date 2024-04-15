@@ -84,6 +84,10 @@ func (a *App) initProject(cfg definitions.IConfig, args ProgramArgs) error {
 	if err != nil {
 		return err
 	}
+	// attempt to create operator just to see if DB url is valid
+	if _, err = a.createOperator(dbURL); err != nil {
+		return err
+	}
 	if err := cfg.InitProject(projectName, dbURL); err != nil {
 		return err
 	}
