@@ -3,6 +3,7 @@ package mongo_db_operator
 import (
 	"context"
 	"fmt"
+	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -16,6 +17,9 @@ const DBPort = "27017"
 
 func createMongoContainer(dbUser string) (string, func()) {
 	ctx := context.Background()
+	memoryLimitModifier := func(hc *container.HostConfig) {
+		hc.Memory = 100 * 1024 * 1024
+	}
 	req := testcontainers.ContainerRequest{
 		Image:        "mongo:7.0.5",
 		ExposedPorts: []string{DBPort + "/tcp"},
@@ -24,7 +28,8 @@ func createMongoContainer(dbUser string) (string, func()) {
 			"MONGO_INITDB_ROOT_USERNAME": dbUser,
 			"MONGO_INITDB_ROOT_PASSWORD": DBPassword,
 		},
-		WaitingFor: wait.ForListeningPort(DBPort + "/tcp"),
+		WaitingFor:         wait.ForListeningPort(DBPort + "/tcp"),
+		HostConfigModifier: memoryLimitModifier,
 	}
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
