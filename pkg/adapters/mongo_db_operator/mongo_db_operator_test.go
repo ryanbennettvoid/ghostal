@@ -7,9 +7,6 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 	"testing"
 )
 
@@ -53,60 +50,8 @@ func createMongoContainer(dbUser string) (string, func()) {
 	}
 }
 
-type MockCar struct {
-	Make  string `bson:"make"`
-	Model string `bson:"model"`
-	Year  int    `bson:"year"`
-	Color string `bson:"color"`
-}
-
-func getCollection(dbURL string) (*mongo.Collection, func()) {
-	parsedURL, err := ParseMongoURL(dbURL)
-	if err != nil {
-		panic(err)
-	}
-	clonedURL := parsedURL.Clone()
-	clonedURL.Path = "admin"
-	dbURL = clonedURL.String()
-
-	clientOptions := options.Client().ApplyURI(dbURL)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		panic(err)
-	}
-
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	collection := client.Database(DBName).Collection("vehicles")
-	return collection, func() {
-		client.Disconnect(context.Background())
-	}
-}
-
-func writeSeedData(dbURL string) {
-
-	vehicles := []interface{}{
-		MockCar{"Toyota", "Camry", 2022, "Black"},
-		MockCar{"Ford", "Mustang", 2021, "Red"},
-		MockCar{"Honda", "Civic", 2020, "Blue"},
-		MockCar{"Tesla", "Model 3", 2023, "White"},
-		MockCar{"Chevrolet", "Impala", 2019, "Silver"},
-	}
-
-	collection, cleanup := getCollection(dbURL)
-	defer cleanup()
-
-	_, err := collection.InsertMany(context.TODO(), vehicles)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func getNumVehicles(dbURL string) int {
-	collection, cleanup := getCollection(dbURL)
+	collection, cleanup := GetMongoDBCollection(dbURL)
 	defer cleanup()
 	result, err := collection.CountDocuments(context.Background(), bson.D{})
 	if err != nil {
@@ -129,7 +74,7 @@ func runTest(t *testing.T, dbUser string) {
 	operator, err := CreateMongoDBOperator(dbURL)
 	assert.NoError(t, err)
 
-	writeSeedData(dbURL)
+	WriteMongoDBSeedData(dbURL)
 
 	assert.Equal(t, 5, getNumVehicles(dbURL))
 
@@ -157,7 +102,7 @@ func runTest(t *testing.T, dbUser string) {
 
 	{
 		// modify DB before restoring snapshot
-		collection, cleanup := getCollection(dbURL)
+		collection, cleanup := GetMongoDBCollection(dbURL)
 		defer cleanup()
 		_, err := collection.DeleteMany(context.Background(), bson.D{{"year", bson.D{{"$lt", 2022}}}})
 		assert.NoError(t, err)
@@ -180,6 +125,7 @@ func runTest(t *testing.T, dbUser string) {
 	{
 		allDatabases, err := operator.List()
 		assert.NoError(t, err)
-		assert.Len(t, allDatabases, 0)
+		assert.Len(t, allDatabases, 1)
+		assert.Equal(t, "v1", allDatabases[0].Name)
 	}
 }

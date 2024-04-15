@@ -5,30 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"ghostel/pkg/definitions"
-	"ghostel/pkg/utils"
-	"io/ioutil"
-	"os"
 	"time"
 )
 
 type JSONFileConfig struct {
-	FilePath   string
+	dataStore  definitions.IDataStore
 	ConfigData definitions.ConfigData
 }
 
-func NewJSONFileConfig(filePath string) *JSONFileConfig {
+func NewJSONFileConfig(dataStore definitions.IDataStore) *JSONFileConfig {
 	return &JSONFileConfig{
-		FilePath: filePath,
+		dataStore: dataStore,
 	}
 }
 
 func (cm *JSONFileConfig) load() error {
-	data, err := ioutil.ReadFile(cm.FilePath)
+	data, err := cm.dataStore.Load()
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil // No file yet, start with empty config
-		}
 		return err
+	}
+	if len(data) == 0 {
+		return nil
 	}
 	return json.Unmarshal(data, &cm.ConfigData)
 }
@@ -38,7 +35,7 @@ func (cm *JSONFileConfig) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(cm.FilePath, data, 0644)
+	return cm.dataStore.Save(data)
 }
 
 func (cm *JSONFileConfig) InitProject(name, dbURL string) error {
@@ -59,7 +56,7 @@ func (cm *JSONFileConfig) InitProject(name, dbURL string) error {
 		}
 	}
 
-	cm.ConfigData.SelectedProject = utils.ToPointer(name)
+	cm.ConfigData.SelectedProject = name
 
 	newProject := definitions.Project{
 		Name:      name,
@@ -78,7 +75,7 @@ func (cm *JSONFileConfig) SelectProject(name string) error {
 
 	for _, p := range cm.ConfigData.Projects {
 		if p.Name == name {
-			cm.ConfigData.SelectedProject = &p.Name
+			cm.ConfigData.SelectedProject = p.Name
 			return cm.save()
 		}
 	}
@@ -93,8 +90,8 @@ func (cm *JSONFileConfig) GetProject(name *string) (definitions.Project, error) 
 	projectToGet := ""
 	if name != nil {
 		projectToGet = *name
-	} else if cm.ConfigData.SelectedProject != nil {
-		projectToGet = *cm.ConfigData.SelectedProject
+	} else if cm.ConfigData.SelectedProject != "" {
+		projectToGet = cm.ConfigData.SelectedProject
 	} else {
 		return definitions.Project{}, errors.New("failed to determine project to get")
 	}
@@ -115,8 +112,8 @@ func (cm *JSONFileConfig) SetProject(name *string, project definitions.Project) 
 	projectToSet := ""
 	if name != nil {
 		projectToSet = *name
-	} else if cm.ConfigData.SelectedProject != nil {
-		projectToSet = *cm.ConfigData.SelectedProject
+	} else if cm.ConfigData.SelectedProject != "" {
+		projectToSet = cm.ConfigData.SelectedProject
 	} else {
 		return errors.New("failed to determine project to set")
 	}
