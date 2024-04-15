@@ -31,7 +31,7 @@ func (p ProjectsList) TableInfo(selectedProjectName string) ([]string, [][]strin
 }
 
 type ConfigData struct {
-	SelectedProject *string   `json:"selectedProject"`
+	SelectedProject string    `json:"selectedProject"`
 	Projects        []Project `json:"projects"`
 }
 

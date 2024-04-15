@@ -2,6 +2,7 @@ package mongo_db_operator
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
@@ -78,6 +79,10 @@ func cloneDB(db *mongo.Client, sourceDBName, targetDBName string) error {
 	collections, err := srcDB.ListCollectionNames(context.TODO(), bson.D{})
 	if err != nil {
 		return fmt.Errorf("failed to list collection names: %w", err)
+	}
+
+	if len(collections) == 0 {
+		return errors.New("cannot clone: source database has no collections")
 	}
 
 	// Iterate over each collection in the source database
