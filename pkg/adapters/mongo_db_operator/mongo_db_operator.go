@@ -13,16 +13,6 @@ type MongoDBOperator struct {
 	mongoURL *MongoURL
 }
 
-func CreateMongoDBOperator(dbURL string) (*MongoDBOperator, error) {
-	mongoURL, err := ParseMongoURL(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	return &MongoDBOperator{
-		mongoURL: mongoURL,
-	}, nil
-}
-
 func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), error) {
 	dbURL := mo.mongoURL.dbURL.String()
 	if useDefault {
