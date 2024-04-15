@@ -4,46 +4,49 @@ import (
 	"errors"
 	"fmt"
 	"ghostel/pkg/adapters/json_file_config"
-	"ghostel/pkg/adapters/mongo_db_operator"
-	"ghostel/pkg/adapters/postgres_db_operator"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
+	"ghostel/pkg/values"
 )
 
-var NoArgsProvidedError = errors.New("no arguments provided")
-
 type App struct {
-	version      string
-	logger       definitions.ILogger
-	tableBuilder definitions.ITableBuilder
+	version            string
+	dbOperatorBuilders []definitions.IDBOperatorBuilder
+	logger             definitions.ILogger
+	tableBuilder       definitions.ITableBuilder
 }
 
-func NewApp(version string, logger definitions.ILogger, tableBuilder definitions.ITableBuilder) *App {
+func NewApp(
+	version string,
+	dbOperatorBuilders []definitions.IDBOperatorBuilder,
+	logger definitions.ILogger,
+	tableBuilder definitions.ITableBuilder,
+) *App {
 	return &App{
-		version:      version,
-		logger:       logger,
-		tableBuilder: tableBuilder,
+		version:            version,
+		dbOperatorBuilders: dbOperatorBuilders,
+		logger:             logger,
+		tableBuilder:       tableBuilder,
 	}
 }
 
 func (a *App) createOperator(dbURL string) (definitions.IDBOperator, error) {
-	scheme, err := utils.GetURLScheme(dbURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get URL scheme: %w", err)
+	for _, builder := range a.dbOperatorBuilders {
+		dbOperator, err := builder.BuildOperator(dbURL)
+		if err != nil {
+			if err != values.UnsupportedURLSchemeError {
+				a.logger.Warning("unexpected error while attempting to build %s operator: %s", builder.ID(), err)
+			}
+			continue
+		}
+		return dbOperator, nil
 	}
-	switch scheme {
-	case "postgresql":
-		return postgres_db_operator.CreatePostgresDBOperator(dbURL)
-	case "mongodb":
-		return mongo_db_operator.CreateMongoDBOperator(dbURL)
-	default:
-		return nil, fmt.Errorf("unsupported database scheme: %s", scheme)
-	}
+	return nil, errors.New("no supported database operator found for the given database URL")
 }
 
 func (a *App) parseProgramArgs(args []string) (ProgramArgs, error) {
 	if len(args) == 0 || len(args[0]) == 0 {
-		return ProgramArgs{}, NoArgsProvidedError
+		return ProgramArgs{}, values.NoProgramArgsProvidedError
 	}
 	command := Command(args[0])
 	options := make([]string, 0)
@@ -190,7 +193,7 @@ func (a *App) listSnapshots(cfg definitions.IConfig) error {
 func (a *App) Run(dataStore definitions.IDataStore, executable string, programArgs []string) error {
 	args, err := a.parseProgramArgs(programArgs)
 	if err != nil {
-		if err == NoArgsProvidedError {
+		if err == values.NoProgramArgsProvidedError {
 			return a.printHelp(executable)
 		}
 		return err

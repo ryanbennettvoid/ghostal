@@ -22,8 +22,16 @@ jobs:
         with:
           go-version: '1.22.1'
 
+      - name: Cleanup Before
+        if: always()
+        run: docker system prune -a --volumes --force
+
       - name: Build and Install
         run: make install
 
       - name: Test
         run: make test
+
+      - name: Cleanup After
+        if: always()
+        run: docker system prune -a --volumes --force
