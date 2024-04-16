@@ -266,6 +266,7 @@ func runSmokeTest(t *testing.T, projectName, dbURL string) {
 
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, initCmd), "should initialize project")
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should create snapshot")
+	assert.Errorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should fail to create snapshot with duplicate name")
 
 	assertLogContains(t, "v1", true, func() {
 		assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "ls"), "should list snapshots")
