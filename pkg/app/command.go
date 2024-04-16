@@ -30,11 +30,11 @@ var AllCommands = func(executable string) []CommandInfo {
 		{fmt.Sprintf("%s %s", executable, HelpCommand), "Show the list of commands"},
 		{fmt.Sprintf("%s %s <project_name> <database_name>", executable, InitCommand), "Initialize project in current directory"},
 		{fmt.Sprintf("%s %s <project_name>", executable, SelectCommand), "Select a project"},
+		{fmt.Sprintf("%s %s <key> <value>", executable, SetCommand), "Sets a configuration value on the selected project"},
 		{fmt.Sprintf("%s %s", executable, StatusCommand), "Show all projects in current directory"},
 		{fmt.Sprintf("%s %s <snapshot_name>", executable, SnapshotCommand), "Create a snapshot in the selected project"},
 		{fmt.Sprintf("%s %s <snapshot_name>", executable, RestoreCommand), "Restore a snapshot in the selected project"},
 		{fmt.Sprintf("%s %s <snapshot_name>", executable, DeleteCommand), "Delete a snapshot in the selected project"},
 		{fmt.Sprintf("%s %s", executable, ListCommand), "List all snapshots in the selected project"},
-		{fmt.Sprintf("%s %s", executable, SetCommand), "Sets a configuration value on the selected project"},
 	}
 }
