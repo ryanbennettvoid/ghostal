@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"ghostel/pkg/definitions"
+	"ghostel/pkg/utils"
 	"ghostel/pkg/values"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -42,13 +43,31 @@ func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), erro
 	}, nil
 }
 
+func (mo *MongoDBOperator) checkSnapshotName(snapshotName string) error {
+	if !utils.IsValidSnapshotName(snapshotName) {
+		return values.NoSpecialCharsErr
+	}
+	list, err := mo.List()
+	if err != nil {
+		return err
+	}
+	for _, item := range list {
+		if item.Name == snapshotName {
+			return values.SnapshotNameTakenErr
+		}
+	}
+	return nil
+}
+
 func (mo *MongoDBOperator) Snapshot(snapshotName string) error {
+	if err := mo.checkSnapshotName(snapshotName); err != nil {
+		return fmt.Errorf("failed to check snapshot name: %w", err)
+	}
 	db, close, err := mo.connect(true)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 	defer close()
-
 	sourceDatabase := mo.mongoURL.DBName()
 	destinationDatabase := snapshotName
 
