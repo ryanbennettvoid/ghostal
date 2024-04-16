@@ -53,7 +53,7 @@ If you want to add support for other databases, just implement interfaces:
 ```go
 type IDBOperator interface {
   Snapshot(snapshotName string) error
-  Restore(snapshotName string) error
+  Restore(snapshotName string, fast bool) error
   Delete(snapshotName string) error
   List() (List, error)
 }
