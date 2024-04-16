@@ -23,6 +23,8 @@ func backupDB(db *mongo.Client, sourceDB string, fn func() error) error {
 		// if error, drop current source and rename backup to source
 		_ = dropDB(db, sourceDB)
 		_ = cloneDB(db, backupDBName, sourceDB)
+		// after emergency restore, drop backup
+		_ = dropDB(db, backupDBName)
 		return err
 	}
 	// is success, drop backup
