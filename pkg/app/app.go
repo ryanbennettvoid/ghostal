@@ -128,13 +128,13 @@ func (a *App) setProjectConfigKeyValue(cfg definitions.IConfig, args ProgramArgs
 		return err
 	}
 	switch key {
-	case "fastSnapshot":
+	case "fastRestore":
 		{
 			asBool, err := utils.StringAsBool(value)
 			if err != nil {
 				return err
 			}
-			selectedProject.FastSnapshot = utils.ToPointer(asBool)
+			selectedProject.FastRestore = utils.ToPointer(asBool)
 		}
 	default:
 		return fmt.Errorf("invalid key: \"%s\"", key)
@@ -179,6 +179,10 @@ func (a *App) getDBOperator(cfg definitions.IConfig) (definitions.IDBOperator, e
 }
 
 func (a *App) snapshotCommand(cfg definitions.IConfig, args ProgramArgs, operation string) error {
+	selectedProject, err := cfg.GetProject(nil)
+	if err != nil {
+		return nil
+	}
 	snapshotName, err := args.Options.Get(0, "project name")
 	if err != nil {
 		return err
@@ -193,7 +197,11 @@ func (a *App) snapshotCommand(cfg definitions.IConfig, args ProgramArgs, operati
 			return err
 		}
 	case "restore":
-		if err := dbOperator.Restore(snapshotName); err != nil {
+		fastRestore := false
+		if selectedProject.FastRestore != nil && *selectedProject.FastRestore == true {
+			fastRestore = true
+		}
+		if err := dbOperator.Restore(snapshotName, fastRestore); err != nil {
 			return err
 		}
 	case "delete":

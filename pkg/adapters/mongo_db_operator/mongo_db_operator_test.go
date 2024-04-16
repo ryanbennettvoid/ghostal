@@ -71,7 +71,7 @@ func runTest(t *testing.T, dbUser string) {
 	dbURL, cleanup := createMongoContainer(dbUser)
 	defer cleanup()
 
-	operator, err := (&MongoDBOperatorBuilder{}).BuildOperator(dbURL)
+	operator, err := CreateMongoDBOperator(dbURL)
 	assert.NoError(t, err)
 
 	WriteMongoDBSeedData(dbURL)
@@ -111,7 +111,7 @@ func runTest(t *testing.T, dbUser string) {
 	assert.Equal(t, 2, getNumVehicles(dbURL))
 
 	{
-		err := operator.Restore("v1")
+		err := operator.Restore("v1", false)
 		assert.NoError(t, err)
 	}
 
