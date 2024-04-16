@@ -27,7 +27,7 @@ func (list List) TableInfo() ([]string, [][]string) {
 
 type IDBOperator interface {
 	Snapshot(snapshotName string) error
-	Restore(snapshotName string) error
+	Restore(snapshotName string, fast bool) error
 	Delete(snapshotName string) error
 	List() (List, error)
 }

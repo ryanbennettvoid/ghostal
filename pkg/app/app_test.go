@@ -91,6 +91,40 @@ func TestUnit_App_Select(t *testing.T) {
 	assert.NoError(t, err)
 	dataStore.Data = configDataToSave
 	assert.NoError(t, createAndRunAppWithDataStore(dataStore, "select bbb"))
+	var c definitions.ConfigData
+	assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+	assert.Equal(t, "bbb", c.SelectedProject)
+}
+
+func TestUnit_App_Set(t *testing.T) {
+	dataStore := memory_data_store.NewMemoryDataStore()
+	configDataToSave, err := json.Marshal(definitions.ConfigData{
+		SelectedProject: "aaa",
+		Projects: []definitions.Project{
+			{
+				Name:      "aaa",
+				DBURL:     "postgresql://localhost",
+				CreatedAt: time.Time{},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	dataStore.Data = configDataToSave
+	{
+		assert.NoError(t, createAndRunAppWithDataStore(dataStore, "set fastRestore true"))
+		var c definitions.ConfigData
+		assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+		assert.True(t, *c.Projects[0].FastRestore)
+	}
+	{
+		assert.NoError(t, createAndRunAppWithDataStore(dataStore, "set fastRestore false"))
+		var c definitions.ConfigData
+		assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+		assert.False(t, *c.Projects[0].FastRestore)
+	}
+	{
+		assert.Error(t, createAndRunAppWithDataStore(dataStore, "set fastRestore xxx"))
+	}
 }
 
 func TestUnit_App_Status(t *testing.T) {
@@ -203,12 +237,14 @@ func createMongoContainer() (string, func()) {
 func TestIntegration_App_SnapshotSmokePostgres(t *testing.T) {
 	dbURL, cleanup := createPostgresContainer()
 	defer cleanup()
+	postgres_db_operator.WritePostgresSeedData(dbURL)
 	runSmokeTest(t, "pg_local", dbURL)
 }
 
 func TestIntegration_App_SnapshotSmokeMongo(t *testing.T) {
 	dbURL, cleanup := createMongoContainer()
 	defer cleanup()
+	mongo_db_operator.WriteMongoDBSeedData(dbURL)
 	runSmokeTest(t, "mongo_local", dbURL)
 }
 
@@ -228,17 +264,9 @@ func runSmokeTest(t *testing.T, projectName, dbURL string) {
 	dataStore := memory_data_store.NewMemoryDataStore()
 	initCmd := fmt.Sprintf("init %s %s", projectName, dbURL)
 
-	switch projectName {
-	case "pg_local":
-		postgres_db_operator.WritePostgresSeedData(dbURL)
-		break
-	case "mongo_local":
-		mongo_db_operator.WriteMongoDBSeedData(dbURL)
-		break
-	}
-
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, initCmd), "should initialize project")
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should create snapshot")
+	assert.Errorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should fail to create snapshot with duplicate name")
 
 	assertLogContains(t, "v1", true, func() {
 		assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "ls"), "should list snapshots")
@@ -259,4 +287,8 @@ func runSmokeTest(t *testing.T, projectName, dbURL string) {
 	assertLogContains(t, "v1", false, func() {
 		assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "ls"), "should list snapshots")
 	})
+
+	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot xxx"), "should create snapshot")
+	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "set fastRestore true"), "should set fastRestore to true for project")
+	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "restore xxx"), "should restore snapshot (fast)")
 }

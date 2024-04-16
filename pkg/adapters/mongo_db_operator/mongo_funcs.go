@@ -13,27 +13,51 @@ import (
 	"time"
 )
 
-func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string) error {
+// backupDB backs up `sourceDB` and restores it if `fn` fails
+func backupDB(db *mongo.Client, sourceDB string, fn func() error) error {
+	backupDBName := "temp_emergency_backup_" + sourceDB
+	if err := cloneDB(db, sourceDB, backupDBName); err != nil {
+		return fmt.Errorf("failed clone original to backup: %w", err)
+	}
+	if err := fn(); err != nil {
+		// if error, drop current source and rename backup to source
+		_ = dropDB(db, sourceDB)
+		_ = cloneDB(db, backupDBName, sourceDB)
+		return err
+	}
+	// is success, drop backup
+	_ = dropDB(db, backupDBName)
+	return nil
+}
+
+func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string, fast bool) error {
 	// NOTE: MongoDB doesn't support renaming databases (?)
 	//		 so cloning is used instead
 
-	// backup original
-	backupDBName := "temp_emergency_backup_" + originalDBName
-	if err := cloneDB(db, originalDBName, backupDBName); err != nil {
-		return fmt.Errorf("failed clone original to backup: %w", err)
+	if fast {
+		// drop original
+		if err := dropDB(db, originalDBName); err != nil {
+			return fmt.Errorf("failed to drop original: %w", err)
+		}
+		// copy snapshot to original
+		if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
+			return fmt.Errorf("failed to clone snapshot to orignal: %w", err)
+		}
+		return nil
 	}
-	// drop original
-	if err := dropDB(db, originalDBName); err != nil {
-		return fmt.Errorf("failed to drop original: %w", err)
-	}
-	// copy snapshot to original
-	if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
-		return fmt.Errorf("failed to clone snapshot to oriignal: %w", err)
-	}
-	// drop backup
-	if err := dropDB(db, backupDBName); err != nil {
-		return fmt.Errorf("failed to drop backup: %w", err)
-	}
+
+	return backupDB(db, originalDBName, func() error {
+		// drop original
+		if err := dropDB(db, originalDBName); err != nil {
+			return fmt.Errorf("failed to drop original: %w", err)
+		}
+		// copy snapshot to original
+		if err := cloneDB(db, snapshotDBName, originalDBName); err != nil {
+			return fmt.Errorf("failed to clone snapshot to orignal: %w", err)
+		}
+		return nil
+	})
+
 	return nil
 }
 
