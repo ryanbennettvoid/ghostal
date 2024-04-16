@@ -114,6 +114,37 @@ func (a *App) selectProject(cfg definitions.IConfig, args ProgramArgs) error {
 	return nil
 }
 
+func (a *App) setProjectConfigKeyValue(cfg definitions.IConfig, args ProgramArgs) error {
+	selectedProject, err := cfg.GetProject(nil)
+	if err != nil {
+		return err
+	}
+	key, err := args.Options.Get(0, "project config key")
+	if err != nil {
+		return err
+	}
+	value, err := args.Options.Get(1, "project config value")
+	if err != nil {
+		return err
+	}
+	switch key {
+	case "fastSnapshot":
+		{
+			asBool, err := utils.StringAsBool(value)
+			if err != nil {
+				return err
+			}
+			selectedProject.FastSnapshot = utils.ToPointer(asBool)
+		}
+	default:
+		return fmt.Errorf("invalid key: \"%s\"", key)
+	}
+	if err := cfg.SetProject(utils.ToPointer(selectedProject.Name), selectedProject); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (a *App) printStatus(cfg definitions.IConfig) error {
 	allProjects, err := cfg.GetAllProjects()
 	if err != nil {
@@ -213,6 +244,8 @@ func (a *App) Run(dataStore definitions.IDataStore, executable string, programAr
 		return a.initProject(cfg, args)
 	case SelectCommand:
 		return a.selectProject(cfg, args)
+	case SetCommand:
+		return a.setProjectConfigKeyValue(cfg, args)
 	case StatusCommand:
 		return a.printStatus(cfg)
 	}
