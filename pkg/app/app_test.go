@@ -235,15 +235,27 @@ func createMongoContainer() (string, func()) {
 }
 
 func TestIntegration_App_SnapshotSmokePostgres(t *testing.T) {
-	dbURL, cleanup := createPostgresContainer()
-	defer cleanup()
-	runSmokeTest(t, "pg_local", dbURL)
+	fastSnapshotOptions := []bool{false, true}
+	for _, v := range fastSnapshotOptions {
+		func(v bool) {
+			dbURL, cleanup := createPostgresContainer()
+			defer cleanup()
+			postgres_db_operator.WritePostgresSeedData(dbURL)
+			runSmokeTest(t, "pg_local", dbURL, v)
+		}(v)
+	}
 }
 
 func TestIntegration_App_SnapshotSmokeMongo(t *testing.T) {
-	dbURL, cleanup := createMongoContainer()
-	defer cleanup()
-	runSmokeTest(t, "mongo_local", dbURL)
+	fastSnapshotOptions := []bool{false, true}
+	for _, v := range fastSnapshotOptions {
+		func(v bool) {
+			dbURL, cleanup := createMongoContainer()
+			defer cleanup()
+			mongo_db_operator.WriteMongoDBSeedData(dbURL)
+			runSmokeTest(t, "mongo_local", dbURL, v)
+		}(v)
+	}
 }
 
 func assertLogContains(t *testing.T, substring string, positive bool, fn func()) {
@@ -258,20 +270,14 @@ func assertLogContains(t *testing.T, substring string, positive bool, fn func())
 	}
 }
 
-func runSmokeTest(t *testing.T, projectName, dbURL string) {
+func runSmokeTest(t *testing.T, projectName, dbURL string, fastSnapshot bool) {
 	dataStore := memory_data_store.NewMemoryDataStore()
 	initCmd := fmt.Sprintf("init %s %s", projectName, dbURL)
 
-	switch projectName {
-	case "pg_local":
-		postgres_db_operator.WritePostgresSeedData(dbURL)
-		break
-	case "mongo_local":
-		mongo_db_operator.WriteMongoDBSeedData(dbURL)
-		break
-	}
-
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, initCmd), "should initialize project")
+	if fastSnapshot {
+		assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "set fastSnapshot true"), "should set fastSnapshot to true for project")
+	}
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should create snapshot")
 
 	assertLogContains(t, "v1", true, func() {
