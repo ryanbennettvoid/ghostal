@@ -84,6 +84,9 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 
 // backupDB backs up `sourceDB` and restores it if `fn` fails
 func backupDB(db *sql.DB, sourceDB string, fn func() error) error {
+	if err := terminateConnections(db, sourceDB); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
 	backupDBName := "temp_emergency_backup_" + sourceDB
 	if err := renameDB(db, sourceDB, backupDBName); err != nil {
 		return fmt.Errorf("failed to rename snapshot: %w", err)
@@ -100,6 +103,9 @@ func backupDB(db *sql.DB, sourceDB string, fn func() error) error {
 }
 
 func createTemplateDB(db *sql.DB, targetDBName, sourceDBName, dbOwner string) error {
+	if err := terminateConnections(db, sourceDBName); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
 	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", targetDBName, sourceDBName, dbOwner)
 	_, err := db.Exec(query)
 	if err != nil {
@@ -132,7 +138,6 @@ func restoreDB(db *sql.DB, originalDBName, snapshotDBName, originalDBOwner strin
 }
 
 func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string) error {
-	// assumes current db connection is not for default DB, not original DB
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
