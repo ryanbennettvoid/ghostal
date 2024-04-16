@@ -29,9 +29,6 @@ gho snapshot before_user_migration
 # List snapshots
 gho ls
 
-# Enable fast restore
-gho set fastRestore true
-
 # Restore snapshot
 gho restore before_user_migration
 
