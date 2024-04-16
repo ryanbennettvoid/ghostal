@@ -51,6 +51,7 @@ func TestUnit_App_Help(t *testing.T) {
 	assert.Contains(t, fullLog, "gho help")
 	assert.Contains(t, fullLog, "gho init <project_name> <database_name>")
 	assert.Contains(t, fullLog, "gho select <project_name>")
+	assert.Contains(t, fullLog, "gho set <key> <value>")
 	assert.Contains(t, fullLog, "gho status")
 	assert.Contains(t, fullLog, "gho snapshot <snapshot_name>")
 	assert.Contains(t, fullLog, "gho restore <snapshot_name>")

@@ -29,6 +29,9 @@ gho snapshot before_user_migration
 # List snapshots
 gho ls
 
+# Enable fast restore
+gho set fastRestore true
+
 # Restore snapshot
 gho restore before_user_migration
 
@@ -45,6 +48,22 @@ gho status
 
 # Select the PG database
 gho select my_local_pg
+```
+
+## Faster Restore
+By default, restoring a snapshot will first create a backup of the original database. Then only upon successfully restoring the snapshot will the backup be deleted.
+
+But the initial backup step can be skipped to speed up the restore operation.
+
+```sh
+# Select the project
+gho select myDb
+
+# Enable fast restore
+gho set fastRestore true
+
+# All subsequent restores will be faster 
+gho restore v1
 ```
 
 ## Supporting other databases
