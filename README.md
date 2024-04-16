@@ -47,6 +47,22 @@ gho status
 gho select my_local_pg
 ```
 
+## Faster Restore
+By default, restoring a snapshot will first create a backup of the original database. Then only upon successfully restoring the snapshot will the backup be deleted.
+
+But the initial backup step can be skipped to speed up the restore operation.
+
+```sh
+# Select the project
+gho select myDb
+
+# Enable fast restore
+gho set fastRestore true
+
+# All subsequent restores will be faster 
+gho restore v1
+```
+
 ## Supporting other databases
 
 If you want to add support for other databases, just implement interfaces:
