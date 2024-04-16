@@ -6,9 +6,10 @@ import (
 )
 
 type Project struct {
-	Name      string    `json:"name"`
-	DBURL     string    `json:"dbUrl"`
-	CreatedAt time.Time `json:"createdAt"`
+	Name        string    `json:"name"`
+	DBURL       string    `json:"dbUrl"`
+	FastRestore *bool     `json:"fastRestore"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 type ProjectsList []Project
