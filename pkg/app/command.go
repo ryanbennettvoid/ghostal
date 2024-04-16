@@ -8,6 +8,7 @@ const VersionCommand = "version"
 const HelpCommand = "help"
 const InitCommand = "init"
 const SelectCommand = "select"
+const SetCommand = "set"
 const StatusCommand = "status"
 const SnapshotCommand = "snapshot"
 const RestoreCommand = "restore"
@@ -34,5 +35,6 @@ var AllCommands = func(executable string) []CommandInfo {
 		{fmt.Sprintf("%s %s <snapshot_name>", executable, RestoreCommand), "Restore a snapshot in the selected project"},
 		{fmt.Sprintf("%s %s <snapshot_name>", executable, DeleteCommand), "Delete a snapshot in the selected project"},
 		{fmt.Sprintf("%s %s", executable, ListCommand), "List all snapshots in the selected project"},
+		{fmt.Sprintf("%s %s", executable, SetCommand), "Sets a configuration value on the selected project"},
 	}
 }
