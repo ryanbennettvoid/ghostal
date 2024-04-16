@@ -13,6 +13,19 @@ type MongoDBOperator struct {
 	mongoURL *MongoURL
 }
 
+func CreateMongoDBOperator(dbURL string) (*MongoDBOperator, error) {
+	mongoURL, err := ParseMongoURL(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	if mongoURL.dbURL.Scheme != "mongodb" {
+		return nil, values.UnsupportedURLSchemeError
+	}
+	return &MongoDBOperator{
+		mongoURL: mongoURL,
+	}, nil
+}
+
 func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), error) {
 	dbURL := mo.mongoURL.dbURL.String()
 	if useDefault {
@@ -42,7 +55,7 @@ func (mo *MongoDBOperator) Snapshot(snapshotName string) error {
 	return snapshotDB(db, sourceDatabase, destinationDatabase)
 }
 
-func (mo *MongoDBOperator) Restore(snapshotName string) error {
+func (mo *MongoDBOperator) Restore(snapshotName string, fast bool) error {
 	db, close, err := mo.connect(true)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
@@ -57,7 +70,7 @@ func (mo *MongoDBOperator) Restore(snapshotName string) error {
 		if d.Name == snapshotName {
 			originalDBName := mo.mongoURL.DBName()
 			snapshotDBName := d.DBName
-			return restoreDB(db, originalDBName, snapshotDBName)
+			return restoreDB(db, originalDBName, snapshotDBName, fast)
 		}
 	}
 
