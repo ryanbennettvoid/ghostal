@@ -67,7 +67,7 @@ func runTest(t *testing.T, dbUser string) {
 	dbURL, cleanup := createPostgresContainer(dbUser)
 	defer cleanup()
 
-	operator, err := (&PostgresDBOperatorBuilder{}).BuildOperator(dbURL)
+	operator, err := CreatePostgresDBOperator(dbURL)
 	assert.NoError(t, err)
 
 	WritePostgresSeedData(dbURL)
@@ -106,7 +106,7 @@ func runTest(t *testing.T, dbUser string) {
 	assert.Equal(t, 2, getNumVehicles(dbURL))
 
 	{
-		err := operator.Restore("v1")
+		err := operator.Restore("v1", false)
 		assert.NoError(t, err)
 	}
 

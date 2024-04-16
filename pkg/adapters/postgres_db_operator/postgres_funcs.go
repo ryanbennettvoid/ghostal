@@ -31,6 +31,7 @@ func renameDB(db *sql.DB, currentName, newName string) error {
 	}
 	return nil
 }
+
 func dropDB(db *sql.DB, targetDB string) error {
 	if err := terminateConnections(db, targetDB); err != nil {
 		return fmt.Errorf("failed to terminate connection: %w", err)
@@ -81,39 +82,65 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 	return list, nil
 }
 
-func restoreDB(db *sql.DB, originalDBName, snapshotDBName, originalDBOwner string) error {
-
-	// backup original via rename
-	backupSnapshotName := "temp_emergency_backup_" + originalDBName
-	if err := renameDB(db, originalDBName, backupSnapshotName); err != nil {
+// backupDB backs up `sourceDB` and restores it if `fn` fails
+func backupDB(db *sql.DB, sourceDB string, fn func() error) error {
+	if err := terminateConnections(db, sourceDB); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
+	backupDBName := "temp_emergency_backup_" + sourceDB
+	if err := renameDB(db, sourceDB, backupDBName); err != nil {
 		return fmt.Errorf("failed to rename snapshot: %w", err)
 	}
+	if err := fn(); err != nil {
+		// if error, drop current source and rename backup to source
+		_ = dropDB(db, sourceDB)
+		_ = renameDB(db, backupDBName, sourceDB)
+		return err
+	}
+	// is success, drop backup
+	_ = dropDB(db, backupDBName)
+	return nil
+}
 
-	// restore snapshot to original via template
-	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", originalDBName, snapshotDBName, originalDBOwner)
+func createTemplateDB(db *sql.DB, targetDBName, sourceDBName, dbOwner string) error {
+	if err := terminateConnections(db, sourceDBName); err != nil {
+		return fmt.Errorf("failed to terminate connection: %w", err)
+	}
+	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", targetDBName, sourceDBName, dbOwner)
 	_, err := db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("failed to create template database (%s): %w", query, err)
 	}
-
-	// delete backup
-	if err := dropDB(db, backupSnapshotName); err != nil {
-		return fmt.Errorf("failed to remove snapshot: %w", err)
-	}
-
 	return nil
 }
 
+func restoreDB(db *sql.DB, originalDBName, snapshotDBName, originalDBOwner string, fast bool) error {
+
+	if fast {
+		if err := dropDB(db, originalDBName); err != nil {
+			return err
+		}
+		if err := createTemplateDB(db, originalDBName, snapshotDBName, originalDBOwner); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return backupDB(db, originalDBName, func() error {
+		if err := dropDB(db, originalDBName); err != nil {
+			return err
+		}
+		if err := createTemplateDB(db, originalDBName, snapshotDBName, originalDBOwner); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
 func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string) error {
-	// assumes current db connection is not for default DB, not original DB
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
 	snapshotDBName := utils.BuildSnapshotDBName(snapshotName, time.Now())
-	query := fmt.Sprintf("CREATE DATABASE %s WITH TEMPLATE %s OWNER %s;", snapshotDBName, originalDBName, originalDBOwner)
-	_, err := db.Exec(query)
-	if err != nil {
-		return fmt.Errorf("failed to create snapshot (%s): %w", query, err)
-	}
-	return nil
+	return createTemplateDB(db, snapshotDBName, originalDBName, originalDBOwner)
 }

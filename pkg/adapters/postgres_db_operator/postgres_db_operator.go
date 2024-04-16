@@ -13,6 +13,19 @@ type PostgresDBOperator struct {
 	pgURL *PostgresURL
 }
 
+func CreatePostgresDBOperator(dbURL string) (*PostgresDBOperator, error) {
+	pgURL, err := ParsePostgresURL(dbURL)
+	if err != nil {
+		return nil, err
+	}
+	if pgURL.dbURL.Scheme != "postgresql" {
+		return nil, values.UnsupportedURLSchemeError
+	}
+	return &PostgresDBOperator{
+		pgURL: pgURL,
+	}, nil
+}
+
 func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 	dbURL := p.pgURL.dbURL.String()
 	if useDefault {
@@ -66,7 +79,7 @@ func (p *PostgresDBOperator) Snapshot(snapshotName string) error {
 	return snapshotDB(db, originalDBName, originalDBOwner, snapshotName)
 }
 
-func (p *PostgresDBOperator) Restore(snapshotName string) error {
+func (p *PostgresDBOperator) Restore(snapshotName string, fast bool) error {
 	db, close, err := p.connect(true)
 	if err != nil {
 		return err
@@ -82,7 +95,7 @@ func (p *PostgresDBOperator) Restore(snapshotName string) error {
 			originalDBName := p.pgURL.DBName()
 			snapshotDBName := item.DBName
 			originalDBOwner := p.pgURL.Username()
-			if err := restoreDB(db, originalDBName, snapshotDBName, originalDBOwner); err != nil {
+			if err := restoreDB(db, originalDBName, snapshotDBName, originalDBOwner, fast); err != nil {
 				return err
 			}
 			return nil
