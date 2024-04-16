@@ -91,6 +91,40 @@ func TestUnit_App_Select(t *testing.T) {
 	assert.NoError(t, err)
 	dataStore.Data = configDataToSave
 	assert.NoError(t, createAndRunAppWithDataStore(dataStore, "select bbb"))
+	var c definitions.ConfigData
+	assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+	assert.Equal(t, "bbb", c.SelectedProject)
+}
+
+func TestUnit_App_Set(t *testing.T) {
+	dataStore := memory_data_store.NewMemoryDataStore()
+	configDataToSave, err := json.Marshal(definitions.ConfigData{
+		SelectedProject: "aaa",
+		Projects: []definitions.Project{
+			{
+				Name:      "aaa",
+				DBURL:     "postgresql://localhost",
+				CreatedAt: time.Time{},
+			},
+		},
+	})
+	assert.NoError(t, err)
+	dataStore.Data = configDataToSave
+	{
+		assert.NoError(t, createAndRunAppWithDataStore(dataStore, "set fastSnapshot true"))
+		var c definitions.ConfigData
+		assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+		assert.True(t, *c.Projects[0].FastSnapshot)
+	}
+	{
+		assert.NoError(t, createAndRunAppWithDataStore(dataStore, "set fastSnapshot false"))
+		var c definitions.ConfigData
+		assert.NoError(t, json.Unmarshal(dataStore.Data, &c), "should have saved correct config data")
+		assert.False(t, *c.Projects[0].FastSnapshot)
+	}
+	{
+		assert.Error(t, createAndRunAppWithDataStore(dataStore, "set fastSnapshot xxx"))
+	}
 }
 
 func TestUnit_App_Status(t *testing.T) {
