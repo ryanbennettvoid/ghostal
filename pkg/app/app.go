@@ -150,13 +150,6 @@ func (a *App) printStatus(cfg definitions.IConfig) error {
 	if err != nil {
 		return err
 	}
-	for idx := range allProjects {
-		sanitizedDBURL, err := utils.SanitizeDBURL(allProjects[idx].DBURL)
-		if err != nil {
-			return fmt.Errorf("failed to sanitize database url: %w", err)
-		}
-		allProjects[idx].DBURL = sanitizedDBURL
-	}
 	selectedProject, err := cfg.GetProject(nil)
 	if err != nil {
 		return err

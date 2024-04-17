@@ -26,7 +26,11 @@ func (p ProjectsList) TableInfo(selectedProjectName string) ([]string, [][]strin
 		}
 		relativeTime := utils.ToRelativeTime(p.CreatedAt, time.Now())
 		formattedTime := p.CreatedAt.Format("2006-01-02 15:04:05")
-		rows = append(rows, []string{name, p.DBURL, relativeTime, formattedTime})
+		sanitizedDBURL, err := utils.SanitizeDBURL(p.DBURL)
+		if err != nil {
+			sanitizedDBURL = "<PARSE ERROR>"
+		}
+		rows = append(rows, []string{name, sanitizedDBURL, relativeTime, formattedTime})
 	}
 	return columns, rows
 }
