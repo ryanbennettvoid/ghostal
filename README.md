@@ -71,7 +71,7 @@ type IDBOperator interface {
   Snapshot(snapshotName string) error
   Restore(snapshotName string, fast bool) error
   Delete(snapshotName string) error
-  List() (List, error)
+  ListSnapshots() (SnapshotList, error)
 }
 
 type IDBOperatorBuilder interface {

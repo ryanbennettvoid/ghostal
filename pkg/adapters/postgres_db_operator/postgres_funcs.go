@@ -67,7 +67,7 @@ func dropDB(db *sql.DB, targetDB string) error {
 	return nil
 }
 
-func listDBs(db *sql.DB) (definitions.List, error) {
+func listSnapshots(db *sql.DB) (definitions.SnapshotList, error) {
 	query := "SELECT datname FROM pg_database"
 	rows, err := db.Query(query)
 	if err != nil {
@@ -75,7 +75,7 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 	}
 	defer rows.Close()
 
-	list := make([]definitions.ListResult, 0)
+	list := make([]definitions.SnapshotListResult, 0)
 
 	for rows.Next() {
 		var dbName string
@@ -91,10 +91,10 @@ func listDBs(db *sql.DB) (definitions.List, error) {
 			return nil, err
 		}
 
-		list = append(list, definitions.ListResult{
-			Name:      snapshotDBNameParts.Name,
-			DBName:    dbName,
-			CreatedAt: snapshotDBNameParts.Timestamp,
+		list = append(list, definitions.SnapshotListResult{
+			SnapshotName: snapshotDBNameParts.SnapshotName,
+			DBName:       dbName,
+			CreatedAt:    snapshotDBNameParts.Timestamp,
 		})
 	}
 
@@ -164,6 +164,9 @@ func snapshotDB(db *sql.DB, originalDBName, originalDBOwner, snapshotName string
 	if err := terminateConnections(db, originalDBName); err != nil {
 		return err
 	}
-	snapshotDBName := utils.BuildSnapshotDBName(snapshotName, time.Now())
+	snapshotDBName, err := utils.BuildSnapshotDBName(originalDBName, snapshotName, time.Now())
+	if err != nil {
+		return err
+	}
 	return createTemplateDB(db, snapshotDBName, originalDBName, originalDBOwner)
 }

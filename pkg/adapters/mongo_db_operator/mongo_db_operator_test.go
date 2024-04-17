@@ -83,7 +83,7 @@ func runTest(t *testing.T, dbUser string) {
 	}
 
 	{
-		allDatabases, err := operator.List()
+		allDatabases, err := operator.ListSnapshots()
 		assert.NoError(t, err)
 		assert.Len(t, allDatabases, 1)
 	}
@@ -93,7 +93,7 @@ func runTest(t *testing.T, dbUser string) {
 	}
 
 	{
-		allDatabases, err := operator.List()
+		allDatabases, err := operator.ListSnapshots()
 		assert.NoError(t, err)
 		assert.Len(t, allDatabases, 2)
 	}
@@ -133,9 +133,9 @@ func runTest(t *testing.T, dbUser string) {
 	}
 
 	{
-		allDatabases, err := operator.List()
+		allDatabases, err := operator.ListSnapshots()
 		assert.NoError(t, err)
 		assert.Len(t, allDatabases, 1)
-		assert.Equal(t, "v1", allDatabases[0].Name)
+		assert.Equal(t, "v1", allDatabases[0].SnapshotName)
 	}
 }

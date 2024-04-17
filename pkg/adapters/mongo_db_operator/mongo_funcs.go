@@ -79,7 +79,10 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string, fast boo
 }
 
 func snapshotDB(db *mongo.Client, originalDBName, snapshotName string) error {
-	fullSnapshotName := utils.BuildSnapshotDBName(snapshotName, time.Now())
+	fullSnapshotName, err := utils.BuildSnapshotDBName(originalDBName, snapshotName, time.Now())
+	if err != nil {
+		return err
+	}
 	return cloneDB(db, originalDBName, fullSnapshotName)
 }
 
@@ -87,13 +90,13 @@ func dropDB(db *mongo.Client, dbName string) error {
 	return db.Database(dbName).Drop(context.Background())
 }
 
-func listDBs(db *mongo.Client) (definitions.List, error) {
+func listSnapshots(db *mongo.Client) (definitions.SnapshotList, error) {
 	// List all collections in the source database
 	databases, err := db.ListDatabases(context.TODO(), bson.D{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list databases: %w", err)
 	}
-	list := make(definitions.List, 0)
+	list := make(definitions.SnapshotList, 0)
 	for _, d := range databases.Databases {
 		if !strings.HasPrefix(d.Name, values.SnapshotDBPrefix) {
 			continue
@@ -102,10 +105,10 @@ func listDBs(db *mongo.Client) (definitions.List, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse snapshot database name: %w", err)
 		}
-		list = append(list, definitions.ListResult{
-			Name:      snapshotDBNameParts.Name,
-			DBName:    d.Name,
-			CreatedAt: snapshotDBNameParts.Timestamp,
+		list = append(list, definitions.SnapshotListResult{
+			SnapshotName: snapshotDBNameParts.SnapshotName,
+			DBName:       d.Name,
+			CreatedAt:    snapshotDBNameParts.Timestamp,
 		})
 	}
 	return list, nil
