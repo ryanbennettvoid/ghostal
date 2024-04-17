@@ -104,7 +104,17 @@ func runTest(t *testing.T, dbUser string) {
 		// modify DB before restoring snapshot
 		collection, cleanup := GetMongoDBCollection(dbURL, "vehicles")
 		defer cleanup()
-		_, err := collection.DeleteMany(context.Background(), bson.D{{"year", bson.D{{"$lt", 2022}}}})
+		_, err := collection.DeleteMany(context.Background(), bson.D{
+			{
+				Key: "year",
+				Value: bson.D{
+					{
+						Key:   "$lt",
+						Value: 2022,
+					},
+				},
+			},
+		})
 		assert.NoError(t, err)
 	}
 

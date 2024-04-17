@@ -1,7 +1,6 @@
 package file_data_store
 
 import (
-	"io/ioutil"
 	"os"
 )
 
@@ -14,7 +13,7 @@ func NewFileDataStore(filepath string) *FileDataStore {
 }
 
 func (d *FileDataStore) Load() ([]byte, error) {
-	data, err := ioutil.ReadFile(d.filepath)
+	data, err := os.ReadFile(d.filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return make([]byte, 0), nil
@@ -25,5 +24,5 @@ func (d *FileDataStore) Load() ([]byte, error) {
 }
 
 func (d *FileDataStore) Save(data []byte) error {
-	return ioutil.WriteFile(d.filepath, data, 0644)
+	return os.WriteFile(d.filepath, data, 0644)
 }

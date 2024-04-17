@@ -28,3 +28,5 @@ VERSION := $(shell git describe --tags `git rev-list --tags --max-count=1` 2>/de
 install: deps
 	cd cmd/gho && go install -ldflags="-X 'main.Version=${VERSION}'"
 
+lint: deps
+	golangci-lint run
