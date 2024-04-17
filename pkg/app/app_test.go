@@ -236,17 +236,44 @@ func createMongoContainer() (string, func()) {
 }
 
 func TestIntegration_App_SnapshotSmokePostgres(t *testing.T) {
-	dbURL, cleanup := createPostgresContainer()
+	dbURL1, cleanup := createPostgresContainer()
 	defer cleanup()
-	postgres_db_operator.WritePostgresSeedData(dbURL, "vehicles")
-	runSmokeTest(t, "pg_local", dbURL)
+	postgres_db_operator.WritePostgresSeedData(dbURL1, "vehicles")
+	// add another DB
+	dbURL2 := ""
+	{
+		parsedDBURL, err := mongo_db_operator.ParseMongoURL(dbURL1)
+		if err != nil {
+			panic(err)
+		}
+		clone := parsedDBURL.Clone()
+		clone.Path = "otherdb"
+		dbURL2 = clone.String()
+
+		_ = postgres_db_operator.PostgresRunQuery(dbURL1, "CREATE DATABASE otherdb")
+		postgres_db_operator.WritePostgresSeedData(dbURL2, "vehicles")
+	}
+	runSmokeTest(t, "pg_local", dbURL1, dbURL2)
 }
 
 func TestIntegration_App_SnapshotSmokeMongo(t *testing.T) {
-	dbURL, cleanup := createMongoContainer()
+	dbURL1, cleanup := createMongoContainer()
 	defer cleanup()
-	mongo_db_operator.WriteMongoDBSeedData(dbURL, "vehicles")
-	runSmokeTest(t, "mongo_local", dbURL)
+	mongo_db_operator.WriteMongoDBSeedData(dbURL1, "vehicles")
+	// add another DB
+	dbURL2 := ""
+	{
+		parsedDBURL, err := mongo_db_operator.ParseMongoURL(dbURL1)
+		if err != nil {
+			panic(err)
+		}
+		clone := parsedDBURL.Clone()
+		clone.Path = "otherdb"
+		dbURL2 = clone.String()
+
+		mongo_db_operator.WriteMongoDBSeedData(dbURL2, "vehicles")
+	}
+	runSmokeTest(t, "mongo_local", dbURL1, dbURL2)
 }
 
 func assertLogContains(t *testing.T, substring string, positive bool, fn func()) {
@@ -261,10 +288,10 @@ func assertLogContains(t *testing.T, substring string, positive bool, fn func())
 	}
 }
 
-func runSmokeTest(t *testing.T, projectName, dbURL string) {
+func runSmokeTest(t *testing.T, projectName, dbURL1, dbURL2 string) {
 	dataStore := memory_data_store.NewMemoryDataStore()
-	initCmd := fmt.Sprintf("init %s %s", projectName, dbURL)
 
+	initCmd := fmt.Sprintf("init %s %s", projectName, dbURL1)
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, initCmd), "should initialize project")
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should create snapshot")
 	assert.Errorf(t, createAndRunAppWithDataStore(dataStore, "snapshot v1"), "should fail to create snapshot with duplicate name")
@@ -292,4 +319,14 @@ func runSmokeTest(t *testing.T, projectName, dbURL string) {
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "snapshot xxx"), "should create snapshot")
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "set fastRestore true"), "should set fastRestore to true for project")
 	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "restore xxx"), "should restore snapshot (fast)")
+
+	// initialize another project
+	initCmd2 := fmt.Sprintf("init %s2 %s", projectName, dbURL2)
+
+	assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, initCmd2), "should initialize project 2")
+
+	// snapshots from the first project should not be listed
+	assertLogContains(t, "xxx", false, func() {
+		assert.NoErrorf(t, createAndRunAppWithDataStore(dataStore, "ls"), "should list snapshots")
+	})
 }

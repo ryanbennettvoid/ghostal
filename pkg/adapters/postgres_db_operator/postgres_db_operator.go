@@ -66,7 +66,7 @@ func (p *PostgresDBOperator) Restore(snapshotName string, fast bool) error {
 	}
 	defer close()
 
-	list, err := listSnapshots(db)
+	list, err := listSnapshots(db, p.pgURL.DBName())
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func (p *PostgresDBOperator) Delete(snapshotName string) error {
 	}
 	defer close()
 
-	list, err := listSnapshots(db)
+	list, err := listSnapshots(db, p.pgURL.DBName())
 	if err != nil {
 		return err
 	}
@@ -113,5 +113,5 @@ func (p *PostgresDBOperator) ListSnapshots() (definitions.SnapshotList, error) {
 	}
 	defer close()
 
-	return listSnapshots(db)
+	return listSnapshots(db, p.pgURL.DBName())
 }
