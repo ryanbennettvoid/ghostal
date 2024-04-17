@@ -76,8 +76,6 @@ func restoreDB(db *mongo.Client, originalDBName, snapshotDBName string, fast boo
 		}
 		return nil
 	})
-
-	return nil
 }
 
 func snapshotDB(db *mongo.Client, originalDBName, snapshotName string) error {
