@@ -9,9 +9,26 @@ import (
 	"ghostel/pkg/values"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"strings"
 	"time"
 )
+
+func createMongoConnection(mongoURL *MongoURL, useDefault bool) (*mongo.Client, func(), error) {
+	dbURL := mongoURL.dbURL.String()
+	if useDefault {
+		newMongoURL := mongoURL.Clone()
+		newMongoURL.Path = "admin"
+		dbURL = newMongoURL.String()
+	}
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURL))
+	if err != nil {
+		return nil, nil, err
+	}
+	return client, func() {
+		_ = client.Disconnect(context.Background())
+	}, nil
+}
 
 // backupDB backs up `sourceDB` and restores it if `fn` fails
 func backupDB(db *mongo.Client, sourceDB string, fn func() error) error {
@@ -23,6 +40,8 @@ func backupDB(db *mongo.Client, sourceDB string, fn func() error) error {
 		// if error, drop current source and rename backup to source
 		_ = dropDB(db, sourceDB)
 		_ = cloneDB(db, backupDBName, sourceDB)
+		// after emergency restore, drop backup
+		_ = dropDB(db, backupDBName)
 		return err
 	}
 	// is success, drop backup
