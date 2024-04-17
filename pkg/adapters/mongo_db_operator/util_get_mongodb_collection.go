@@ -28,6 +28,6 @@ func GetMongoDBCollection(dbURL, collectionName string) (*mongo.Collection, func
 
 	collection := client.Database(parsedURL.DBName()).Collection(collectionName)
 	return collection, func() {
-		client.Disconnect(context.Background())
+		_ = client.Disconnect(context.Background())
 	}
 }
