@@ -30,24 +30,23 @@ func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), erro
 }
 
 func (mo *MongoDBOperator) checkSnapshotName(snapshotName string) error {
-	if !utils.IsValidSnapshotName(snapshotName) {
-		return values.NoSpecialCharsErr
-	}
-	list, err := mo.List()
+	list, err := mo.ListSnapshots()
 	if err != nil {
 		return err
 	}
-	for _, item := range list {
-		if item.Name == snapshotName {
-			return values.SnapshotNameTakenErr
-		}
+	_, err = utils.Find(list, func(item definitions.SnapshotListResult) bool {
+		return item.SnapshotName == snapshotName
+	})
+	if err == nil {
+		// item found
+		return values.SnapshotNameTakenErr
 	}
 	return nil
 }
 
 func (mo *MongoDBOperator) Snapshot(snapshotName string) error {
 	if err := mo.checkSnapshotName(snapshotName); err != nil {
-		return fmt.Errorf("failed to check snapshot name: %w", err)
+		return err
 	}
 	db, close, err := mo.connect(true)
 	if err != nil {
@@ -67,12 +66,12 @@ func (mo *MongoDBOperator) Restore(snapshotName string, fast bool) error {
 	}
 	defer close()
 
-	allDatabases, err := listDBs(db)
+	allDatabases, err := listSnapshots(db)
 	if err != nil {
 		return err
 	}
 	for _, d := range allDatabases {
-		if d.Name == snapshotName {
+		if d.SnapshotName == snapshotName {
 			originalDBName := mo.mongoURL.DBName()
 			snapshotDBName := d.DBName
 			return restoreDB(db, originalDBName, snapshotDBName, fast)
@@ -89,12 +88,12 @@ func (mo *MongoDBOperator) Delete(snapshotName string) error {
 	}
 	defer close()
 
-	allDatabases, err := listDBs(db)
+	allDatabases, err := listSnapshots(db)
 	if err != nil {
 		return err
 	}
 	for _, d := range allDatabases {
-		if d.Name == snapshotName {
+		if d.SnapshotName == snapshotName {
 			snapshotDBName := d.DBName
 			return dropDB(db, snapshotDBName)
 		}
@@ -103,12 +102,12 @@ func (mo *MongoDBOperator) Delete(snapshotName string) error {
 	return values.SnapshotNotExistsErr
 }
 
-func (mo *MongoDBOperator) List() (definitions.List, error) {
+func (mo *MongoDBOperator) ListSnapshots() (definitions.SnapshotList, error) {
 	db, close, err := mo.connect(true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect: %w", err)
 	}
 	defer close()
 
-	return listDBs(db)
+	return listSnapshots(db)
 }

@@ -2,6 +2,8 @@ package utils
 
 import "errors"
 
+var FindNotFoundError = errors.New("not found")
+
 func Find[T any](list []T, filter func(t T) bool) (T, error) {
 	for _, item := range list {
 		if filter(item) {
@@ -9,5 +11,5 @@ func Find[T any](list []T, filter func(t T) bool) (T, error) {
 		}
 	}
 	var t T
-	return t, errors.New("not found")
+	return t, FindNotFoundError
 }

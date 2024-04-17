@@ -9,20 +9,35 @@ import (
 )
 
 type SnapshotDBNameParts struct {
-	Name      string
-	Timestamp time.Time
+	SourceDBName string
+	SnapshotName string
+	Timestamp    time.Time
 }
 
-func ParseSnapshotDBName(dbName string) (SnapshotDBNameParts, error) {
-	withoutPrefix := strings.TrimPrefix(dbName, values.SnapshotDBPrefix)
-	partsWithoutPrefix := strings.Split(withoutPrefix, "_")
-	timestamp, err := strconv.Atoi(partsWithoutPrefix[len(partsWithoutPrefix)-1])
+func ParseSnapshotDBName(fullDBName string) (SnapshotDBNameParts, error) {
+	withoutPrefix := strings.TrimPrefix(fullDBName, values.SnapshotDBPrefix)
+
+	partsAfterPrefix := strings.Split(withoutPrefix, "_")
+
+	// go backwards from timestamp
+	position := len(partsAfterPrefix) - 1
+
+	timestamp, err := strconv.Atoi(partsAfterPrefix[position])
 	if err != nil {
 		return SnapshotDBNameParts{}, fmt.Errorf("failed to parse database timestamp: %w", err)
 	}
-	name := strings.Join(partsWithoutPrefix[:len(partsWithoutPrefix)-1], "_")
+
+	position -= 1
+
+	snapshotName := partsAfterPrefix[position]
+
+	position -= 1
+
+	dbName := strings.Join(partsAfterPrefix[:position+1], "_")
+
 	return SnapshotDBNameParts{
-		Name:      name,
-		Timestamp: time.UnixMilli(int64(timestamp)),
+		SourceDBName: dbName,
+		SnapshotName: snapshotName,
+		Timestamp:    time.UnixMilli(int64(timestamp)),
 	}, nil
 }
