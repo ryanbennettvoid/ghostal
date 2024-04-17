@@ -31,24 +31,23 @@ func (p *PostgresDBOperator) connect(useDefault bool) (*sql.DB, func(), error) {
 }
 
 func (p *PostgresDBOperator) checkSnapshotName(snapshotName string) error {
-	if !utils.IsValidSnapshotName(snapshotName) {
-		return values.NoSpecialCharsErr
-	}
-	list, err := p.List()
+	list, err := p.ListSnapshots()
 	if err != nil {
 		return err
 	}
-	for _, item := range list {
-		if item.Name == snapshotName {
-			return values.SnapshotNameTakenErr
-		}
+	_, err = utils.Find(list, func(item definitions.SnapshotListResult) bool {
+		return item.SnapshotName == snapshotName
+	})
+	if err == nil {
+		// item found
+		return values.SnapshotNameTakenErr
 	}
 	return nil
 }
 
 func (p *PostgresDBOperator) Snapshot(snapshotName string) error {
 	if err := p.checkSnapshotName(snapshotName); err != nil {
-		return fmt.Errorf("failed to check snapshot name: %w", err)
+		return err
 	}
 	db, close, err := p.connect(true)
 	if err != nil {
@@ -67,12 +66,12 @@ func (p *PostgresDBOperator) Restore(snapshotName string, fast bool) error {
 	}
 	defer close()
 
-	list, err := listDBs(db)
+	list, err := listSnapshots(db, p.pgURL.DBName())
 	if err != nil {
 		return err
 	}
 	for _, item := range list {
-		if item.Name == snapshotName {
+		if item.SnapshotName == snapshotName {
 			originalDBName := p.pgURL.DBName()
 			snapshotDBName := item.DBName
 			originalDBOwner := p.pgURL.Username()
@@ -92,12 +91,12 @@ func (p *PostgresDBOperator) Delete(snapshotName string) error {
 	}
 	defer close()
 
-	list, err := listDBs(db)
+	list, err := listSnapshots(db, p.pgURL.DBName())
 	if err != nil {
 		return err
 	}
 	for _, item := range list {
-		if item.Name == snapshotName {
+		if item.SnapshotName == snapshotName {
 			if err := dropDB(db, item.DBName); err != nil {
 				return err
 			}
@@ -107,12 +106,12 @@ func (p *PostgresDBOperator) Delete(snapshotName string) error {
 	return values.SnapshotNotExistsErr
 }
 
-func (p *PostgresDBOperator) List() (definitions.List, error) {
+func (p *PostgresDBOperator) ListSnapshots() (definitions.SnapshotList, error) {
 	db, close, err := p.connect(true)
 	if err != nil {
 		return nil, err
 	}
 	defer close()
 
-	return listDBs(db)
+	return listSnapshots(db, p.pgURL.DBName())
 }

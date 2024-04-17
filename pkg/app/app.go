@@ -213,7 +213,7 @@ func (a *App) listSnapshots(cfg definitions.IConfig) error {
 	if err != nil {
 		return err
 	}
-	listItems, err := dbOperator.List()
+	listItems, err := dbOperator.ListSnapshots()
 	if err != nil {
 		return err
 	}
