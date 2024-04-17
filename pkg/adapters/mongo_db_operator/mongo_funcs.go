@@ -90,7 +90,7 @@ func dropDB(db *mongo.Client, dbName string) error {
 	return db.Database(dbName).Drop(context.Background())
 }
 
-func listSnapshots(db *mongo.Client) (definitions.SnapshotList, error) {
+func listSnapshots(db *mongo.Client, sourceDBName string) (definitions.SnapshotList, error) {
 	// List all collections in the source database
 	databases, err := db.ListDatabases(context.TODO(), bson.D{})
 	if err != nil {
@@ -104,6 +104,9 @@ func listSnapshots(db *mongo.Client) (definitions.SnapshotList, error) {
 		snapshotDBNameParts, err := utils.ParseSnapshotDBName(d.Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse snapshot database name: %w", err)
+		}
+		if snapshotDBNameParts.SourceDBName != sourceDBName {
+			continue
 		}
 		list = append(list, definitions.SnapshotListResult{
 			SnapshotName: snapshotDBNameParts.SnapshotName,

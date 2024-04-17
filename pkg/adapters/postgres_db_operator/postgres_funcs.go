@@ -67,7 +67,7 @@ func dropDB(db *sql.DB, targetDB string) error {
 	return nil
 }
 
-func listSnapshots(db *sql.DB) (definitions.SnapshotList, error) {
+func listSnapshots(db *sql.DB, sourceDBName string) (definitions.SnapshotList, error) {
 	query := "SELECT datname FROM pg_database"
 	rows, err := db.Query(query)
 	if err != nil {
@@ -89,6 +89,10 @@ func listSnapshots(db *sql.DB) (definitions.SnapshotList, error) {
 		snapshotDBNameParts, err := utils.ParseSnapshotDBName(dbName)
 		if err != nil {
 			return nil, err
+		}
+
+		if snapshotDBNameParts.SourceDBName != sourceDBName {
+			continue
 		}
 
 		list = append(list, definitions.SnapshotListResult{

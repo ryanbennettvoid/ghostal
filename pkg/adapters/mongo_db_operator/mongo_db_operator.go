@@ -66,7 +66,7 @@ func (mo *MongoDBOperator) Restore(snapshotName string, fast bool) error {
 	}
 	defer close()
 
-	allDatabases, err := listSnapshots(db)
+	allDatabases, err := listSnapshots(db, mo.mongoURL.DBName())
 	if err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (mo *MongoDBOperator) Delete(snapshotName string) error {
 	}
 	defer close()
 
-	allDatabases, err := listSnapshots(db)
+	allDatabases, err := listSnapshots(db, mo.mongoURL.DBName())
 	if err != nil {
 		return err
 	}
@@ -109,5 +109,5 @@ func (mo *MongoDBOperator) ListSnapshots() (definitions.SnapshotList, error) {
 	}
 	defer close()
 
-	return listSnapshots(db)
+	return listSnapshots(db, mo.mongoURL.DBName())
 }
