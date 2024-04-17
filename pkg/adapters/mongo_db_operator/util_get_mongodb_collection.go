@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetMongoDBCollection(dbURL string) (*mongo.Collection, func()) {
+func GetMongoDBCollection(dbURL, collectionName string) (*mongo.Collection, func()) {
 	parsedURL, err := ParseMongoURL(dbURL)
 	if err != nil {
 		panic(err)
@@ -26,7 +26,7 @@ func GetMongoDBCollection(dbURL string) (*mongo.Collection, func()) {
 		panic(err)
 	}
 
-	collection := client.Database(parsedURL.DBName()).Collection("vehicles")
+	collection := client.Database(parsedURL.DBName()).Collection(collectionName)
 	return collection, func() {
 		client.Disconnect(context.Background())
 	}

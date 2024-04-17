@@ -14,15 +14,15 @@ const DBPassword = "gho_pass"
 const DBName = "gho_db"
 const DBPort = "27017"
 
-func createMongoContainer(dbUser string) (string, func()) {
+func createMongoContainer(dbName, dbUser, dbPassword string) (string, func()) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "mongo:7.0.5",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
-			"MONGO_INITDB_DATABASE":      DBName,
+			"MONGO_INITDB_DATABASE":      dbName,
 			"MONGO_INITDB_ROOT_USERNAME": dbUser,
-			"MONGO_INITDB_ROOT_PASSWORD": DBPassword,
+			"MONGO_INITDB_ROOT_PASSWORD": dbPassword,
 		},
 		WaitingFor: wait.ForListeningPort(DBPort + "/tcp"),
 	}
@@ -51,7 +51,7 @@ func createMongoContainer(dbUser string) (string, func()) {
 }
 
 func getNumVehicles(dbURL string) int {
-	collection, cleanup := GetMongoDBCollection(dbURL)
+	collection, cleanup := GetMongoDBCollection(dbURL, "vehicles")
 	defer cleanup()
 	result, err := collection.CountDocuments(context.Background(), bson.D{})
 	if err != nil {
@@ -68,13 +68,13 @@ func TestIntegration_MongoDBOperator_Lifecycle(t *testing.T) {
 }
 
 func runTest(t *testing.T, dbUser string) {
-	dbURL, cleanup := createMongoContainer(dbUser)
+	dbURL, cleanup := createMongoContainer(DBName, dbUser, DBPassword)
 	defer cleanup()
 
 	operator, err := CreateMongoDBOperator(dbURL)
 	assert.NoError(t, err)
 
-	WriteMongoDBSeedData(dbURL)
+	WriteMongoDBSeedData(dbURL, "vehicles")
 
 	assert.Equal(t, 5, getNumVehicles(dbURL))
 
@@ -102,7 +102,7 @@ func runTest(t *testing.T, dbUser string) {
 
 	{
 		// modify DB before restoring snapshot
-		collection, cleanup := GetMongoDBCollection(dbURL)
+		collection, cleanup := GetMongoDBCollection(dbURL, "vehicles")
 		defer cleanup()
 		_, err := collection.DeleteMany(context.Background(), bson.D{{"year", bson.D{{"$lt", 2022}}}})
 		assert.NoError(t, err)
