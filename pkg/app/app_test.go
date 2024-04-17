@@ -238,14 +238,14 @@ func createMongoContainer() (string, func()) {
 func TestIntegration_App_SnapshotSmokePostgres(t *testing.T) {
 	dbURL, cleanup := createPostgresContainer()
 	defer cleanup()
-	postgres_db_operator.WritePostgresSeedData(dbURL)
+	postgres_db_operator.WritePostgresSeedData(dbURL, "vehicles")
 	runSmokeTest(t, "pg_local", dbURL)
 }
 
 func TestIntegration_App_SnapshotSmokeMongo(t *testing.T) {
 	dbURL, cleanup := createMongoContainer()
 	defer cleanup()
-	mongo_db_operator.WriteMongoDBSeedData(dbURL)
+	mongo_db_operator.WriteMongoDBSeedData(dbURL, "vehicles")
 	runSmokeTest(t, "mongo_local", dbURL)
 }
 

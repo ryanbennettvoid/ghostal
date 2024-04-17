@@ -11,6 +11,29 @@ import (
 	"time"
 )
 
+func createPostgresConnection(postgresURL *PostgresURL, useDefault bool) (*sql.DB, func(), error) {
+	dbURL := postgresURL.dbURL.String()
+	if useDefault {
+		newPGURL := postgresURL.Clone()
+		newPGURL.Path = "postgres"
+		dbURL = newPGURL.String()
+	}
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to open connection (%s): %w", dbURL, err)
+	}
+	// Attempt to ping the database to ensure connection is alive
+	err = db.Ping()
+	if err != nil {
+		_ = db.Close() // Ensure the connection is closed if not usable
+		sanitizedDBURL, _ := utils.SanitizeDBURL(dbURL)
+		return nil, nil, fmt.Errorf("failed to connect to database (%s): %w", sanitizedDBURL, err)
+	}
+	return db, func() {
+		_ = db.Close()
+	}, nil
+}
+
 func terminateConnections(db *sql.DB, targetDB string) error {
 	query := "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = $1;"
 	_, err := db.Exec(query, targetDB)
