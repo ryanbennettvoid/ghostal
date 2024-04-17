@@ -4,8 +4,16 @@ import (
 	"fmt"
 	"ghostel/pkg/values"
 	"time"
+	"unicode"
 )
 
-func BuildSnapshotDBName(snapshotName string, timestamp time.Time) string {
-	return fmt.Sprintf("%s%s_%d", values.SnapshotDBPrefix, snapshotName, timestamp.UnixMilli())
+func BuildSnapshotDBName(sourceDBName, snapshotName string, timestamp time.Time) (string, error) {
+	// only allow alphanumeric chars
+	for _, c := range snapshotName {
+		if !unicode.IsLetter(c) && !unicode.IsDigit(c) {
+			return "", values.NoSpecialCharsErr
+		}
+	}
+	result := fmt.Sprintf("%s%s_%s_%d", values.SnapshotDBPrefix, sourceDBName, snapshotName, timestamp.UnixMilli())
+	return result, nil
 }
