@@ -28,5 +28,8 @@ VERSION := $(shell git describe --tags `git rev-list --tags --max-count=1` 2>/de
 install: deps
 	cd cmd/gho && go install -ldflags="-X 'main.Version=${VERSION}'"
 
-lint: deps
+check-lint:
+	@command -v golangci-lint >/dev/null 2>&1 || { echo >&2 "golangci-lint is required but it's not installed. Aborting."; exit 1; }
+
+lint: check-lint deps
 	golangci-lint run
