@@ -8,7 +8,8 @@ type MongoURL struct {
 
 func (p *MongoURL) Clone() *url.URL {
 	clone := *p.dbURL
-	clone.User = &(*p.dbURL.User)
+	u := *p.dbURL.User
+	clone.User = &u
 	return &clone
 }
 
