@@ -13,15 +13,15 @@ const DBPassword = "gho_pass"
 const DBName = "gho_db"
 const DBPort = "5432"
 
-func createPostgresContainer(dbUser string) (string, func()) {
+func createPostgresContainer(dbName, dbUser, dbPassword string) (string, func()) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image:        "postgres:15.1-alpine",
 		ExposedPorts: []string{DBPort + "/tcp"},
 		Env: map[string]string{
-			"POSTGRES_DB":       DBName,
+			"POSTGRES_DB":       dbName,
 			"POSTGRES_USER":     dbUser,
-			"POSTGRES_PASSWORD": DBPassword,
+			"POSTGRES_PASSWORD": dbPassword,
 		},
 		WaitingFor: wait.ForListeningPort(DBPort + "/tcp"),
 	}
@@ -64,13 +64,13 @@ func TestIntegration_PostgresDBOperator_Lifecycle(t *testing.T) {
 }
 
 func runTest(t *testing.T, dbUser string) {
-	dbURL, cleanup := createPostgresContainer(dbUser)
+	dbURL, cleanup := createPostgresContainer(DBName, dbUser, DBPassword)
 	defer cleanup()
 
 	operator, err := CreatePostgresDBOperator(dbURL)
 	assert.NoError(t, err)
 
-	WritePostgresSeedData(dbURL)
+	WritePostgresSeedData(dbURL, "vehicles")
 
 	assert.Equal(t, 5, getNumVehicles(dbURL))
 
