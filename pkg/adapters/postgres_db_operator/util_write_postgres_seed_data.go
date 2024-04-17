@@ -19,5 +19,5 @@ func WritePostgresSeedData(dbURL string, tableName string) {
 		('Honda', 'Civic', 2020, 'Blue'),
 		('Tesla', 'Model 3', 2023, 'White'),
 		('Chevrolet', 'Impala', 2019, 'Silver');
-	`, "vehicles"))
+	`, tableName))
 }
