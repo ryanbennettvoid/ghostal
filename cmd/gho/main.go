@@ -29,7 +29,7 @@ var start = time.Now()
 
 func exit(err error) {
 	if err == nil {
-		logger.Passthrough("Done in %.3fs.\n", time.Now().Sub(start).Seconds())
+		logger.Passthrough("Done in %.3fs.\n", time.Since(start).Seconds())
 		os.Exit(0)
 	} else {
 		logger.Error(err.Error())

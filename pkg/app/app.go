@@ -191,7 +191,7 @@ func (a *App) snapshotCommand(cfg definitions.IConfig, args ProgramArgs, operati
 		}
 	case "restore":
 		fastRestore := false
-		if selectedProject.FastRestore != nil && *selectedProject.FastRestore == true {
+		if selectedProject.FastRestore != nil && *selectedProject.FastRestore {
 			fastRestore = true
 		}
 		if err := dbOperator.Restore(snapshotName, fastRestore); err != nil {
