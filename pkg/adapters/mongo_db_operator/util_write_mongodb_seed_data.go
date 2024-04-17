@@ -12,7 +12,7 @@ type MockCar struct {
 	Color string `bson:"color"`
 }
 
-func WriteMongoDBSeedData(dbURL string) {
+func WriteMongoDBSeedData(dbURL, collectionName string) {
 
 	vehicles := []interface{}{
 		MockCar{"Toyota", "Camry", 2022, "Black"},
@@ -22,7 +22,7 @@ func WriteMongoDBSeedData(dbURL string) {
 		MockCar{"Chevrolet", "Impala", 2019, "Silver"},
 	}
 
-	collection, cleanup := GetMongoDBCollection(dbURL)
+	collection, cleanup := GetMongoDBCollection(dbURL, collectionName)
 	defer cleanup()
 
 	_, err := collection.InsertMany(context.TODO(), vehicles)

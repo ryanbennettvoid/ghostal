@@ -1,13 +1,11 @@
 package mongo_db_operator
 
 import (
-	"context"
 	"fmt"
 	"ghostel/pkg/definitions"
 	"ghostel/pkg/utils"
 	"ghostel/pkg/values"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoDBOperator struct {
@@ -28,19 +26,7 @@ func CreateMongoDBOperator(dbURL string) (*MongoDBOperator, error) {
 }
 
 func (mo *MongoDBOperator) connect(useDefault bool) (*mongo.Client, func(), error) {
-	dbURL := mo.mongoURL.dbURL.String()
-	if useDefault {
-		newMongoURL := mo.mongoURL.Clone()
-		newMongoURL.Path = "admin"
-		dbURL = newMongoURL.String()
-	}
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURL))
-	if err != nil {
-		return nil, nil, err
-	}
-	return client, func() {
-		_ = client.Disconnect(context.Background())
-	}, nil
+	return createMongoConnection(mo.mongoURL, useDefault)
 }
 
 func (mo *MongoDBOperator) checkSnapshotName(snapshotName string) error {
