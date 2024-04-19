@@ -7,7 +7,7 @@ import (
 type MongoDBOperatorBuilder struct{}
 
 func (p *MongoDBOperatorBuilder) ID() string {
-	return "mongo"
+	return "MongoDB"
 }
 
 func (p *MongoDBOperatorBuilder) BuildOperator(dbURL string) (definitions.IDBOperator, error) {
