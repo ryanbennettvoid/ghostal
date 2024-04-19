@@ -1,36 +1,51 @@
 package definitions
 
 import (
-	"ghostal/pkg/utils"
+	"ghostal/pkg/values"
+	"net/url"
+	"strings"
 	"time"
 )
 
 type Project struct {
 	Name        string    `json:"name"`
 	DBURL       string    `json:"dbUrl"`
-	FastRestore *bool     `json:"fastRestore"`
+	FastRestore *bool     `json:"fastRestore,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
+}
+
+func (p Project) DBName() string {
+	parsedURL, err := url.Parse(p.DBURL)
+	if err != nil {
+		return values.Unknown
+	}
+	return strings.TrimPrefix(parsedURL.Path, "/")
+}
+
+func (p Project) DBType(dbOperatorBuilders []IDBOperatorBuilder) string {
+	for _, builder := range dbOperatorBuilders {
+		if _, err := builder.BuildOperator(p.DBURL); err == nil {
+			return builder.ID()
+		}
+	}
+	return values.Unknown
 }
 
 type ProjectsList []Project
 
-func (p ProjectsList) TableInfo(selectedProjectName string) ([]string, [][]string) {
-	columns := []string{"Projects", "Database URL", "Created", ""}
+func (p ProjectsList) TableInfo(selectedProjectName string, dbOperatorBuilders []IDBOperatorBuilder) ([]string, [][]string) {
+	columns := []string{"Project", "Database", "Type"}
 	rows := make([][]string, 0)
 	for _, p := range p {
-		name := p.Name
+		projectName := p.Name
 		if p.Name == selectedProjectName {
-			name = "* " + name
+			projectName = "* " + projectName
 		} else {
-			name = "  " + name
+			projectName = "  " + projectName
 		}
-		relativeTime := utils.ToRelativeTime(p.CreatedAt, time.Now())
-		formattedTime := p.CreatedAt.Format("2006-01-02 15:04:05")
-		sanitizedDBURL, err := utils.SanitizeDBURL(p.DBURL)
-		if err != nil {
-			sanitizedDBURL = "<PARSE ERROR>"
-		}
-		rows = append(rows, []string{name, sanitizedDBURL, relativeTime, formattedTime})
+		dbName := p.DBName()
+		dbType := p.DBType(dbOperatorBuilders)
+		rows = append(rows, []string{projectName, dbName, dbType})
 	}
 	return columns, rows
 }

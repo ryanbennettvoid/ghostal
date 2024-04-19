@@ -154,7 +154,7 @@ func (a *App) printStatus(cfg definitions.IConfig) error {
 	if err != nil {
 		return err
 	}
-	columns, rows := allProjects.TableInfo(selectedProject.Name)
+	columns, rows := allProjects.TableInfo(selectedProject.Name, a.dbOperatorBuilders)
 	a.logger.Passthrough(a.tableBuilder.BuildTable(columns, rows))
 	return nil
 }
