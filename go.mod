@@ -1,4 +1,4 @@
-module ghostel
+module ghostal
 
 go 1.22.1
 

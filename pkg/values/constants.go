@@ -1,4 +1,4 @@
 package values
 
-const DefaultConfigFilepath = ".ghostel"
-const SnapshotDBPrefix = "ghostelsnapshot_"
+const DefaultConfigFilepath = ".ghostal"
+const SnapshotDBPrefix = "ghostalsnapshot_"

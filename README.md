@@ -1,6 +1,6 @@
-# Ghostel
+# Ghostal
 
-Ghostel is a database snapshot/restore tool for Postgres and MongoDB. It is architected to make additional database support simple to implement. It is intended for the local development environment, not production.
+Ghostal is a database snapshot/restore tool for Postgres and MongoDB. It is architected to make additional database support simple to implement. It is intended for the local development environment, not production.
 
 Inspired by [Stellar](https://github.com/fastmonkeys/stellar)– a PG snapshot tool written in Python. I decided to implement it in Go and make it database-agnostic.
 

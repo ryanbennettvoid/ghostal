@@ -3,9 +3,9 @@ package postgres_db_operator
 import (
 	"database/sql"
 	"fmt"
-	"ghostel/pkg/definitions"
-	"ghostel/pkg/utils"
-	"ghostel/pkg/values"
+	"ghostal/pkg/definitions"
+	"ghostal/pkg/utils"
+	"ghostal/pkg/values"
 	_ "github.com/lib/pq"
 )
 

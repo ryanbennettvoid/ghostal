@@ -1,14 +1,14 @@
 package main
 
 import (
-	"ghostel/pkg/adapters/file_data_store"
-	"ghostel/pkg/adapters/logrus_logger"
-	"ghostel/pkg/adapters/mongo_db_operator"
-	"ghostel/pkg/adapters/postgres_db_operator"
-	"ghostel/pkg/adapters/pretty_table_builder"
-	"ghostel/pkg/app"
-	"ghostel/pkg/definitions"
-	"ghostel/pkg/values"
+	"ghostal/pkg/adapters/file_data_store"
+	"ghostal/pkg/adapters/logrus_logger"
+	"ghostal/pkg/adapters/mongo_db_operator"
+	"ghostal/pkg/adapters/postgres_db_operator"
+	"ghostal/pkg/adapters/pretty_table_builder"
+	"ghostal/pkg/app"
+	"ghostal/pkg/definitions"
+	"ghostal/pkg/values"
 	"os"
 	"time"
 )

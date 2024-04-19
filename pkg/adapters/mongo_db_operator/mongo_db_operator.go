@@ -2,9 +2,9 @@ package mongo_db_operator
 
 import (
 	"fmt"
-	"ghostel/pkg/definitions"
-	"ghostel/pkg/utils"
-	"ghostel/pkg/values"
+	"ghostal/pkg/definitions"
+	"ghostal/pkg/utils"
+	"ghostal/pkg/values"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
