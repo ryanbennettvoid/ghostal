@@ -1,7 +1,6 @@
 package definitions
 
 import (
-	"ghostal/pkg/utils"
 	"ghostal/pkg/values"
 	"net/url"
 	"strings"
@@ -11,7 +10,7 @@ import (
 type Project struct {
 	Name        string    `json:"name"`
 	DBURL       string    `json:"dbUrl"`
-	FastRestore *bool     `json:"fastRestore"`
+	FastRestore *bool     `json:"fastRestore,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
@@ -35,7 +34,7 @@ func (p Project) DBType(dbOperatorBuilders []IDBOperatorBuilder) string {
 type ProjectsList []Project
 
 func (p ProjectsList) TableInfo(selectedProjectName string, dbOperatorBuilders []IDBOperatorBuilder) ([]string, [][]string) {
-	columns := []string{"Project", "Database", "Type", "Age"}
+	columns := []string{"Project", "Database", "Type"}
 	rows := make([][]string, 0)
 	for _, p := range p {
 		projectName := p.Name
@@ -46,8 +45,7 @@ func (p ProjectsList) TableInfo(selectedProjectName string, dbOperatorBuilders [
 		}
 		dbName := p.DBName()
 		dbType := p.DBType(dbOperatorBuilders)
-		relativeTime := utils.ToRelativeTime(p.CreatedAt, time.Now())
-		rows = append(rows, []string{projectName, dbName, dbType, relativeTime})
+		rows = append(rows, []string{projectName, dbName, dbType})
 	}
 	return columns, rows
 }
