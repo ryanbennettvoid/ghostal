@@ -1,7 +1,7 @@
 package postgres_db_operator
 
 import (
-	"ghostel/pkg/definitions"
+	"ghostal/pkg/definitions"
 )
 
 type PostgresDBOperatorBuilder struct{}

@@ -3,10 +3,10 @@ package app
 import (
 	"errors"
 	"fmt"
-	"ghostel/pkg/adapters/json_file_config"
-	"ghostel/pkg/definitions"
-	"ghostel/pkg/utils"
-	"ghostel/pkg/values"
+	"ghostal/pkg/adapters/json_file_config"
+	"ghostal/pkg/definitions"
+	"ghostal/pkg/utils"
+	"ghostal/pkg/values"
 )
 
 type App struct {
@@ -65,7 +65,7 @@ func (a *App) printVersion(executable string) error {
 }
 
 func (a *App) printHelp(executable string) error {
-	appDescription := "\nGhostel (gho) is a database snapshot/restore tool for MongoDB and Postgres."
+	appDescription := "\nGhostal (gho) is a database snapshot/restore tool for MongoDB and Postgres."
 	a.logger.Passthrough(appDescription)
 	a.logger.Passthrough("")
 	columns := []string{"Command", "Description"}

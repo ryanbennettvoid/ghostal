@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"ghostel/pkg/definitions"
+	"ghostal/pkg/definitions"
 	"time"
 )
 

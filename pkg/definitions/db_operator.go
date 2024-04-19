@@ -1,7 +1,7 @@
 package definitions
 
 import (
-	"ghostel/pkg/utils"
+	"ghostal/pkg/utils"
 	"time"
 )
 

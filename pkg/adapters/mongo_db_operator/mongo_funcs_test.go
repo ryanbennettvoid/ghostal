@@ -3,7 +3,7 @@ package mongo_db_operator
 import (
 	"context"
 	"errors"
-	"ghostel/pkg/utils"
+	"ghostal/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

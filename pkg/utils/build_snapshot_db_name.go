@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"ghostel/pkg/values"
+	"ghostal/pkg/values"
 	"time"
 	"unicode"
 )

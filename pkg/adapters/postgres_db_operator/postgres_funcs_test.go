@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"ghostel/pkg/utils"
+	"ghostal/pkg/utils"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

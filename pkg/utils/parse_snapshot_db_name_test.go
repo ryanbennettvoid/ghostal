@@ -7,7 +7,7 @@ import (
 )
 
 func TestUnit_ParseSnapshotDBName(t *testing.T) {
-	input := "ghostelsnapshot_mydb_v1_1712976085060"
+	input := "ghostalsnapshot_mydb_v1_1712976085060"
 	output, err := ParseSnapshotDBName(input)
 	assert.NoError(t, err)
 	assert.Equal(t, "mydb", output.SourceDBName)
@@ -16,7 +16,7 @@ func TestUnit_ParseSnapshotDBName(t *testing.T) {
 }
 
 func TestUnit_ParseSnapshotDBNameWithUnderscores(t *testing.T) {
-	input := "ghostelsnapshot_my_super_db_v2_1712976085061"
+	input := "ghostalsnapshot_my_super_db_v2_1712976085061"
 	output, err := ParseSnapshotDBName(input)
 	assert.NoError(t, err)
 	assert.Equal(t, "my_super_db", output.SourceDBName)
@@ -25,7 +25,7 @@ func TestUnit_ParseSnapshotDBNameWithUnderscores(t *testing.T) {
 }
 
 func TestUnit_ParseSnapshotDBNameCaseSensitive(t *testing.T) {
-	input := "ghostelsnapshot_MyGoodDB_v3_1712976085062"
+	input := "ghostalsnapshot_MyGoodDB_v3_1712976085062"
 	output, err := ParseSnapshotDBName(input)
 	assert.NoError(t, err)
 	assert.Equal(t, "MyGoodDB", output.SourceDBName)
