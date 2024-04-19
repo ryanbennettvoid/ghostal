@@ -135,12 +135,12 @@ func TestUnit_App_Status(t *testing.T) {
 		Projects: []definitions.Project{
 			{
 				Name:      "aaa",
-				DBURL:     "postgresql://localhost",
+				DBURL:     "postgresql://localhost/pgdb",
 				CreatedAt: time.Time{},
 			},
 			{
 				Name:      "bbb",
-				DBURL:     "mongodb://localhost",
+				DBURL:     "mongodb://localhost/modb",
 				CreatedAt: time.Time{},
 			},
 		},
@@ -150,9 +150,13 @@ func TestUnit_App_Status(t *testing.T) {
 	assert.NoError(t, createAndRunAppWithDataStore(dataStore, "status"))
 	fullLog := testLogger.GetFullLog()
 	assert.Contains(t, fullLog, "aaa")
-	assert.Contains(t, fullLog, "postgresql://localhost")
+	assert.Contains(t, fullLog, "pgdb")
+	assert.Contains(t, fullLog, "Postgres")
+	assert.NotContains(t, fullLog, "postgresql://localhost")
 	assert.Contains(t, fullLog, "bbb")
-	assert.Contains(t, fullLog, "mongodb://localhost")
+	assert.Contains(t, fullLog, "modb")
+	assert.Contains(t, fullLog, "MongoDB")
+	assert.NotContains(t, fullLog, "mongodb://localhost")
 }
 
 // ---------

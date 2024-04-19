@@ -7,7 +7,7 @@ import (
 type PostgresDBOperatorBuilder struct{}
 
 func (p *PostgresDBOperatorBuilder) ID() string {
-	return "postgres"
+	return "Postgres"
 }
 
 func (p *PostgresDBOperatorBuilder) BuildOperator(dbURL string) (definitions.IDBOperator, error) {
