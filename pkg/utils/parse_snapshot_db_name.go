@@ -17,27 +17,28 @@ type SnapshotDBNameParts struct {
 func ParseSnapshotDBName(fullDBName string) (SnapshotDBNameParts, error) {
 	withoutPrefix := strings.TrimPrefix(fullDBName, values.SnapshotDBPrefix)
 
-	partsAfterPrefix := strings.Split(withoutPrefix, "_")
-
-	// go backwards from timestamp
-	position := len(partsAfterPrefix) - 1
-
-	timestamp, err := strconv.Atoi(partsAfterPrefix[position])
+	lastUnderscore := strings.LastIndex(withoutPrefix, "_")
+	if lastUnderscore == -1 {
+		return SnapshotDBNameParts{}, fmt.Errorf("invalid snapshot DB name: missing timestamp separator")
+	}
+	timestampStr := withoutPrefix[lastUnderscore+1:]
+	tsInt, err := strconv.ParseInt(timestampStr, 10, 64)
 	if err != nil {
 		return SnapshotDBNameParts{}, fmt.Errorf("failed to parse database timestamp: %w", err)
 	}
 
-	position -= 1
+	withoutTimestamp := withoutPrefix[:lastUnderscore]
 
-	snapshotName := partsAfterPrefix[position]
-
-	position -= 1
-
-	dbName := strings.Join(partsAfterPrefix[:position+1], "_")
+	secondLastUnderscore := strings.LastIndex(withoutTimestamp, "_")
+	if secondLastUnderscore == -1 {
+		return SnapshotDBNameParts{}, fmt.Errorf("invalid snapshot DB name: missing snapshot name separator")
+	}
+	snapshotName := withoutTimestamp[secondLastUnderscore+1:]
+	sourceDBName := withoutTimestamp[:secondLastUnderscore]
 
 	return SnapshotDBNameParts{
-		SourceDBName: dbName,
+		SourceDBName: sourceDBName,
 		SnapshotName: snapshotName,
-		Timestamp:    time.UnixMilli(int64(timestamp)),
+		Timestamp:    time.UnixMilli(tsInt),
 	}, nil
 }

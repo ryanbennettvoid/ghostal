@@ -8,9 +8,9 @@ import (
 )
 
 func BuildSnapshotDBName(sourceDBName, snapshotName string, timestamp time.Time) (string, error) {
-	// only allow alphanumeric chars
+	// allow alphanumeric chars and underscore
 	for _, c := range snapshotName {
-		if !unicode.IsLetter(c) && !unicode.IsDigit(c) {
+		if !(unicode.IsLetter(c) || unicode.IsDigit(c) || c == '_') {
 			return "", values.NoSpecialCharsErr
 		}
 	}

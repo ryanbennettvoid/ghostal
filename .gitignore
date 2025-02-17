@@ -27,3 +27,6 @@ go.work
 .ghostal
 .env
 .secrets
+
+# Mac
+.DS_Store

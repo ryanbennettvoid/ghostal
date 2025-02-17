@@ -31,3 +31,13 @@ func TestUnit_BuildSnapshotDBName_InvalidInput(t *testing.T) {
 	_, err := BuildSnapshotDBName(inputDBName, inputSnapshotName, inputTimestamp)
 	assert.Error(t, err)
 }
+
+func TestUnit_BuildSnapshotDBName_WithUnderscores(t *testing.T) {
+	inputDBName := "myDB"
+	inputSnapshotName := "nice_app"
+	inputTimestamp := time.Now()
+	result, err := BuildSnapshotDBName(inputDBName, inputSnapshotName, inputTimestamp)
+	assert.NoError(t, err)
+	expectedSnapshotName := "ghostalsnapshot_" + inputDBName + "_" + inputSnapshotName + "_" + fmt.Sprintf("%d", inputTimestamp.UnixMilli())
+	assert.Equal(t, expectedSnapshotName, result)
+}
